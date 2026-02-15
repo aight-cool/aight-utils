@@ -76,7 +76,7 @@ export async function sendPush(
     return { ok: false, error: `No device token for ${deviceId}` };
   }
 
-  const relayUrl = config.push?.relayUrl ?? "https://push.aight.app";
+  const relayUrl = config.push?.relayUrl ?? "https://push-relay.brunobar79.workers.dev";
   const relaySecret = config.push?.relaySecret;
   const mode = config.push?.mode ?? "private";
 
