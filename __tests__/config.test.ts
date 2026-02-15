@@ -29,7 +29,10 @@ describe("config RPC", () => {
     registerConfig(api);
     const respond = vi.fn();
     methods["aight.config.patch"]({ params: { push: { mode: "private" } }, respond });
-    expect(respond).toHaveBeenCalledWith(true, expect.objectContaining({ ok: true, patch: { push: { mode: "private" } } }));
+    expect(respond).toHaveBeenCalledWith(
+      true,
+      expect.objectContaining({ ok: true, patch: { push: { mode: "private" } } }),
+    );
   });
 
   it("aight.config.patch rejects non-object", () => {
@@ -45,6 +48,9 @@ describe("config RPC", () => {
     registerConfig(api);
     const respond = vi.fn();
     methods["aight.status"]({ respond });
-    expect(respond).toHaveBeenCalledWith(true, expect.objectContaining({ ok: true, version: "0.1.0" }));
+    expect(respond).toHaveBeenCalledWith(
+      true,
+      expect.objectContaining({ ok: true, version: "0.1.0" }),
+    );
   });
 });

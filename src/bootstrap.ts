@@ -38,12 +38,15 @@ You have the \`aight_item\` tool for managing structured items in the Aight Toda
 
 export function registerBootstrap(api: OpenClawPluginApi) {
   try {
-    const { registerPluginHooksFromDir } = require("openclaw/plugin-sdk");
-    const pluginDir = path.dirname(fileURLToPath(import.meta.url));
-    const hooksDir = path.join(pluginDir, "..", "hooks");
-    registerPluginHooksFromDir(api, hooksDir);
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const sdk = require("openclaw/plugin-sdk");
+    if (sdk?.registerPluginHooksFromDir) {
+      const pluginDir = path.dirname(fileURLToPath(import.meta.url));
+      const hooksDir = path.join(pluginDir, "..", "hooks");
+      sdk.registerPluginHooksFromDir(api, hooksDir);
+    }
   } catch {
-    api.logger.debug("[aight-utils] Could not register hooks dir, using inline approach");
+    api.logger.info("[aight-utils] Could not register hooks dir, using inline approach");
   }
 }
 

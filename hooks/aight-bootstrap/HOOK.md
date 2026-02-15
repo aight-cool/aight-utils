@@ -1,15 +1,7 @@
 ---
 name: aight-bootstrap
 description: "Injects AIGHT.md into agent bootstrap context with tool usage instructions"
-metadata:
-  {
-    "openclaw":
-      {
-        "emoji": "📱",
-        "events": ["agent:bootstrap"],
-        "requires": {},
-      },
-  }
+metadata: { "openclaw": { "emoji": "📱", "events": ["agent:bootstrap"], "requires": {} } }
 ---
 
 # Aight Bootstrap

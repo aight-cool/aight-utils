@@ -120,9 +120,7 @@ export function listItems(filters: ListFilters = {}): Item[] {
     items = items.filter((i) => i.status === filters.status);
   }
   if (filters.labels && filters.labels.length > 0) {
-    items = items.filter((i) =>
-      filters.labels!.some((l) => i.labels?.includes(l)),
-    );
+    items = items.filter((i) => filters.labels!.some((l) => i.labels?.includes(l)));
   }
   if (filters.from) {
     const fromTs = new Date(filters.from).getTime();
@@ -156,7 +154,8 @@ export function registerItems(api: OpenClawPluginApi) {
   api.registerGatewayMethod(
     "aight.items.list",
     ({ params, respond }: GatewayRequestHandlerOptions) => {
-      const filters: ListFilters = params && typeof params === "object" ? params as ListFilters : {};
+      const filters: ListFilters =
+        params && typeof params === "object" ? (params as ListFilters) : {};
       respond(true, { items: listItems(filters) });
     },
   );
@@ -164,7 +163,13 @@ export function registerItems(api: OpenClawPluginApi) {
   api.registerGatewayMethod(
     "aight.items.upsert",
     ({ params, respond }: GatewayRequestHandlerOptions) => {
-      if (!params || typeof params !== "object" || !("id" in params) || !("type" in params) || !("title" in params)) {
+      if (
+        !params ||
+        typeof params !== "object" ||
+        !("id" in params) ||
+        !("type" in params) ||
+        !("title" in params)
+      ) {
         respond(false, { error: "item must have id, type, and title" });
         return;
       }
@@ -188,14 +193,16 @@ export function registerItems(api: OpenClawPluginApi) {
 
   api.registerTool({
     name: "aight_item",
+    label: "Aight Item",
     description:
       "Create, update, or delete a structured item in the Aight Today view. " +
       "Use for reminders, tasks, events, deadlines, and process tracking. " +
       "Parse natural language dates/times before calling (e.g. 'tomorrow at 3pm' → ISO 8601).",
     parameters: AightItemToolParams,
-    async execute(_toolCallId, params) {
+    async execute(_toolCallId: string, params: any) {
       const json = (payload: unknown) => ({
         content: [{ type: "text" as const, text: JSON.stringify(payload, null, 2) }],
+        details: payload,
       });
 
       try {

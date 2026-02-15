@@ -33,18 +33,13 @@ export function getClientSafeConfig(config: AightConfig): Record<string, unknown
 
 export function getPluginConfig(api: OpenClawPluginApi): AightConfig {
   const raw = api.pluginConfig;
-  return raw && typeof raw === "object" && !Array.isArray(raw)
-    ? (raw as AightConfig)
-    : {};
+  return raw && typeof raw === "object" && !Array.isArray(raw) ? (raw as AightConfig) : {};
 }
 
 export function registerConfig(api: OpenClawPluginApi) {
-  api.registerGatewayMethod(
-    "aight.config.get",
-    ({ respond }: GatewayRequestHandlerOptions) => {
-      respond(true, getClientSafeConfig(getPluginConfig(api)));
-    },
-  );
+  api.registerGatewayMethod("aight.config.get", ({ respond }: GatewayRequestHandlerOptions) => {
+    respond(true, getClientSafeConfig(getPluginConfig(api)));
+  });
 
   api.registerGatewayMethod(
     "aight.config.patch",
@@ -61,21 +56,18 @@ export function registerConfig(api: OpenClawPluginApi) {
     },
   );
 
-  api.registerGatewayMethod(
-    "aight.status",
-    ({ respond }: GatewayRequestHandlerOptions) => {
-      const cfg = getPluginConfig(api);
-      respond(true, {
-        ok: true,
-        version: "0.1.0",
-        push: {
-          mode: cfg.push?.mode ?? "private",
-          relayUrl: cfg.push?.relayUrl ?? "https://push.aight.app",
-        },
-        today: {
-          enabled: cfg.today?.enabled ?? true,
-        },
-      });
-    },
-  );
+  api.registerGatewayMethod("aight.status", ({ respond }: GatewayRequestHandlerOptions) => {
+    const cfg = getPluginConfig(api);
+    respond(true, {
+      ok: true,
+      version: "0.1.0",
+      push: {
+        mode: cfg.push?.mode ?? "private",
+        relayUrl: cfg.push?.relayUrl ?? "https://push.aight.app",
+      },
+      today: {
+        enabled: cfg.today?.enabled ?? true,
+      },
+    });
+  });
 }

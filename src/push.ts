@@ -122,7 +122,7 @@ export async function sendPush(
 
 // ── Registration ──
 
-export function registerPush(api: OpenClawPluginApi, config: AightConfig) {
+export function registerPush(api: OpenClawPluginApi, _config: AightConfig) {
   api.registerGatewayMethod(
     "aight.push.register",
     ({ params, respond }: GatewayRequestHandlerOptions) => {

@@ -40,7 +40,12 @@ describe("push token store", () => {
   });
 
   it("registers a token", () => {
-    registerToken({ deviceId: "dev-1", pushToken: "abc123", platform: "ios", registeredAt: new Date().toISOString() });
+    registerToken({
+      deviceId: "dev-1",
+      pushToken: "abc123",
+      platform: "ios",
+      registeredAt: new Date().toISOString(),
+    });
     const tokens = loadTokens();
     expect(tokens).toHaveLength(1);
     expect(tokens[0].deviceId).toBe("dev-1");
@@ -83,7 +88,10 @@ describe("sendPush", () => {
     );
 
     expect(result.ok).toBe(true);
-    expect(mockFetch).toHaveBeenCalledWith("https://test.relay/send", expect.objectContaining({ method: "POST" }));
+    expect(mockFetch).toHaveBeenCalledWith(
+      "https://test.relay/send",
+      expect.objectContaining({ method: "POST" }),
+    );
     const body = JSON.parse(mockFetch.mock.calls[0][1].body);
     expect(body.silent).toBe(true);
   });
@@ -114,7 +122,9 @@ describe("push RPC", () => {
         pluginConfig: {},
         config: {},
         logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
-        registerGatewayMethod: (name: string, handler: Function) => { methods[name] = handler; },
+        registerGatewayMethod: (name: string, handler: Function) => {
+          methods[name] = handler;
+        },
         registerTool: vi.fn(),
         registerService: vi.fn(),
       } as any,
@@ -138,7 +148,10 @@ describe("push RPC", () => {
     registerPush(api, {});
     const respond = vi.fn();
     methods["aight.push.register"]({ params: { deviceId: "dev-1" }, respond });
-    expect(respond).toHaveBeenCalledWith(false, expect.objectContaining({ error: expect.any(String) }));
+    expect(respond).toHaveBeenCalledWith(
+      false,
+      expect.objectContaining({ error: expect.any(String) }),
+    );
   });
 
   it("unregisters device", () => {

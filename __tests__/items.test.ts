@@ -2,32 +2,54 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import * as os from "node:os";
-import { loadItems, saveItems, upsertItem, deleteItem, listItems, registerItems, type Item } from "../src/items.js";
+import {
+  loadItems,
+  saveItems,
+  upsertItem,
+  deleteItem,
+  listItems,
+  registerItems,
+  type Item,
+} from "../src/items.js";
 
 const STORE_DIR = path.join(os.homedir(), ".openclaw", "aight");
 const STORE_PATH = path.join(STORE_DIR, "items.json");
 let backup: string | null = null;
 
 beforeEach(() => {
-  try { backup = fs.readFileSync(STORE_PATH, "utf-8"); } catch { backup = null; }
-  try { fs.unlinkSync(STORE_PATH); } catch {}
+  try {
+    backup = fs.readFileSync(STORE_PATH, "utf-8");
+  } catch {
+    backup = null;
+  }
+  try {
+    fs.unlinkSync(STORE_PATH);
+  } catch {}
 });
 afterEach(() => {
   if (backup !== null) {
     fs.mkdirSync(STORE_DIR, { recursive: true });
     fs.writeFileSync(STORE_PATH, backup);
   } else {
-    try { fs.unlinkSync(STORE_PATH); } catch {}
+    try {
+      fs.unlinkSync(STORE_PATH);
+    } catch {}
   }
 });
 
 const makeItem = (o: Partial<Item> = {}): Item => ({
-  id: "t1", type: "item", title: "Test", ...o,
+  id: "t1",
+  type: "item",
+  title: "Test",
+  ...o,
 });
 
 describe("items store", () => {
   it("loadItems empty", () => expect(loadItems()).toEqual([]));
-  it("round-trip", () => { saveItems([makeItem()]); expect(loadItems()).toHaveLength(1); });
+  it("round-trip", () => {
+    saveItems([makeItem()]);
+    expect(loadItems()).toHaveLength(1);
+  });
   it("upsert creates", () => {
     const item = upsertItem(makeItem());
     expect(item.status).toBe("active");
@@ -49,7 +71,14 @@ describe("items store", () => {
 
 describe("listItems", () => {
   beforeEach(() => {
-    upsertItem(makeItem({ id: "1", type: "trigger", labels: ["reminder"], scheduledFor: "2026-03-01T00:00:00Z" }));
+    upsertItem(
+      makeItem({
+        id: "1",
+        type: "trigger",
+        labels: ["reminder"],
+        scheduledFor: "2026-03-01T00:00:00Z",
+      }),
+    );
     upsertItem(makeItem({ id: "2", type: "item", labels: ["work"] }));
   });
 
@@ -59,7 +88,8 @@ describe("listItems", () => {
   });
   it("filters by type", () => expect(listItems({ type: "trigger" })).toHaveLength(1));
   it("filters by labels", () => expect(listItems({ labels: ["work"] })).toHaveLength(1));
-  it("filters by date from", () => expect(listItems({ from: "2026-06-01T00:00:00Z" })).toHaveLength(1)); // item without scheduledFor passes
+  it("filters by date from", () =>
+    expect(listItems({ from: "2026-06-01T00:00:00Z" })).toHaveLength(1)); // item without scheduledFor passes
 });
 
 describe("items RPC + tool", () => {
@@ -70,10 +100,13 @@ describe("items RPC + tool", () => {
       api: {
         pluginConfig: {},
         logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
-        registerGatewayMethod: (m: string, h: Function) => { methods[m] = h; },
+        registerGatewayMethod: (m: string, h: Function) => {
+          methods[m] = h;
+        },
         registerTool: (t: any) => tools.push(t),
       } as any,
-      methods, tools,
+      methods,
+      tools,
     };
   }
 
@@ -83,7 +116,9 @@ describe("items RPC + tool", () => {
     registerItems(api);
     const respond = vi.fn();
     methods["aight.items.list"]({ params: {}, respond });
-    expect(respond).toHaveBeenCalledWith(true, { items: expect.arrayContaining([expect.objectContaining({ id: "t1" })]) });
+    expect(respond).toHaveBeenCalledWith(true, {
+      items: expect.arrayContaining([expect.objectContaining({ id: "t1" })]),
+    });
   });
 
   it("upsert via RPC", () => {
@@ -91,7 +126,10 @@ describe("items RPC + tool", () => {
     registerItems(api);
     const respond = vi.fn();
     methods["aight.items.upsert"]({ params: { id: "n1", type: "item", title: "New" }, respond });
-    expect(respond).toHaveBeenCalledWith(true, expect.objectContaining({ item: expect.objectContaining({ id: "n1" }) }));
+    expect(respond).toHaveBeenCalledWith(
+      true,
+      expect.objectContaining({ item: expect.objectContaining({ id: "n1" }) }),
+    );
   });
 
   it("delete via RPC", () => {

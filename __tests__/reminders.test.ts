@@ -11,7 +11,9 @@ describe("reminders service", () => {
         logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
         registerGatewayMethod: vi.fn(),
         registerTool: vi.fn(),
-        registerService: (svc: any) => { services[svc.id] = svc; },
+        registerService: (svc: any) => {
+          services[svc.id] = svc;
+        },
       } as any,
       services,
     };

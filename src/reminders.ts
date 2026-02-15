@@ -4,7 +4,7 @@
 
 import type { OpenClawPluginApi } from "openclaw/plugin-sdk";
 import type { AightConfig } from "./config.js";
-import { loadItems, saveItems, type Item } from "./items.js";
+import { loadItems, saveItems } from "./items.js";
 import { sendPush, loadTokens } from "./push.js";
 
 const CHECK_INTERVAL_MS = 30_000;
