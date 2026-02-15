@@ -1,0 +1,23 @@
+{
+  "name": "@aight/utils",
+  "version": "0.1.0",
+  "description": "OpenClaw gateway plugin — push notifications, Today items, config RPC, and agent bootstrap for the Aight app",
+  "type": "module",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/aight-app/utils"
+  },
+  "keywords": ["openclaw", "plugin", "aight", "push-notifications"],
+  "dependencies": {
+    "@sinclair/typebox": "^0.34.0"
+  },
+  "devDependencies": {
+    "openclaw": "*",
+    "vitest": "^3.0.0",
+    "typescript": "^5.7.0"
+  },
+  "openclaw": {
+    "extensions": ["./index.ts"]
+  }
+}

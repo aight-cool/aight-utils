@@ -1,0 +1,67 @@
+{
+  "id": "aight-utils",
+  "name": "Aight Utilities",
+  "description": "Push notifications, Today items, config RPC, and agent bootstrap for the Aight app",
+  "version": "0.1.0",
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "push": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "mode": {
+            "type": "string",
+            "enum": ["private", "rich"],
+            "default": "private"
+          },
+          "relayUrl": {
+            "type": "string",
+            "default": "https://push.aight.app"
+          },
+          "deviceTokens": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "token": { "type": "string" },
+                "platform": { "type": "string", "enum": ["ios", "android"] },
+                "registeredAt": { "type": "string" }
+              },
+              "required": ["token", "platform"]
+            }
+          }
+        }
+      },
+      "today": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "default": true
+          }
+        }
+      }
+    }
+  },
+  "uiHints": {
+    "push.mode": {
+      "label": "Notification Mode",
+      "help": "Private = silent wake; Rich = message preview in notification"
+    },
+    "push.relayUrl": {
+      "label": "Push Relay URL",
+      "placeholder": "https://push.aight.app"
+    },
+    "push.deviceTokens": {
+      "label": "Registered Devices",
+      "advanced": true
+    },
+    "today.enabled": {
+      "label": "Today View"
+    }
+  }
+}
