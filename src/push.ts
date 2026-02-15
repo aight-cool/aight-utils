@@ -14,6 +14,7 @@ export interface DeviceToken {
   deviceId: string;
   pushToken: string;
   platform: "ios" | "android";
+  sandbox?: boolean;
   registeredAt: string;
 }
 
@@ -80,9 +81,9 @@ export async function sendPush(
   const mode = config.push?.mode ?? "private";
 
   const pushBody: Record<string, unknown> = {
-    deviceId,
-    pushToken: device.pushToken,
+    token: device.pushToken,
     platform: device.platform,
+    sandbox: device.sandbox ?? false,
     silent: mode === "private" || !!payload.silent,
   };
 
@@ -141,6 +142,7 @@ export function registerPush(api: OpenClawPluginApi, _config: AightConfig) {
         deviceId: params.deviceId,
         pushToken: params.pushToken,
         platform: params.platform,
+        sandbox: !!params.sandbox,
         registeredAt: new Date().toISOString(),
       });
 
