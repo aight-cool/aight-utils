@@ -3,6 +3,7 @@
  */
 
 import type { OpenClawPluginApi, GatewayRequestHandlerOptions } from "openclaw/plugin-sdk";
+import { DEFAULT_PUSH_MODE } from "./defaults.js";
 
 export interface AightConfig {
   push?: {
@@ -101,7 +102,7 @@ export function registerConfig(api: OpenClawPluginApi) {
       ok: true,
       version: "0.1.0",
       push: {
-        mode: cfg.push?.mode ?? "rich",
+        mode: cfg.push?.mode ?? DEFAULT_PUSH_MODE,
         relayUrl: cfg.push?.relayUrl ?? "https://push.aight.app",
       },
       today: {

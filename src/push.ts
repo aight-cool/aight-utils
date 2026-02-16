@@ -13,6 +13,7 @@ import * as path from "node:path";
 import * as os from "node:os";
 import type { OpenClawPluginApi, GatewayRequestHandlerOptions } from "openclaw/plugin-sdk";
 import type { AightConfig } from "./config.js";
+import { DEFAULT_RELAY_URL, DEFAULT_PUSH_MODE } from "./defaults.js";
 
 // ── Device Token Store ──
 
@@ -105,8 +106,8 @@ export async function sendPush(
     return { ok: false, error: `No sendKey for device ${deviceId} — re-register to obtain one` };
   }
 
-  const relayUrl = config.push?.relayUrl ?? "https://push.aight.cool";
-  const mode = config.push?.mode ?? "rich";
+  const relayUrl = config.push?.relayUrl ?? DEFAULT_RELAY_URL;
+  const mode = config.push?.mode ?? DEFAULT_PUSH_MODE;
 
   const pushBody: Record<string, unknown> = {
     token: device.pushToken,
@@ -177,7 +178,7 @@ export function registerPush(api: OpenClawPluginApi, _config: AightConfig) {
       api.logger.info(`[aight-utils] Push token registered for device ${deviceId}`);
 
       // Obtain sendKey from relay in background
-      const relayUrl = _config.push?.relayUrl ?? "https://push.aight.cool";
+      const relayUrl = _config.push?.relayUrl ?? DEFAULT_RELAY_URL;
       obtainSendKey(relayUrl, pushToken)
         .then((sendKey) => {
           // Update the token with the sendKey
