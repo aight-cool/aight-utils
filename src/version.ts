@@ -29,14 +29,16 @@ let cachedGatewayVersion: string | null = null;
 function getGatewayVersion(): string {
   if (cachedGatewayVersion) return cachedGatewayVersion;
   try {
-    // openclaw's package.json is resolvable from plugin context
-    const openclawPkg = require("openclaw/package.json");
-    cachedGatewayVersion = openclawPkg.version ?? "unknown";
+    const { execSync } = require("node:child_process");
+    const out = execSync("openclaw --version", { timeout: 5000 }).toString().trim();
+    cachedGatewayVersion = out || "unknown";
   } catch {
+    // Try to find openclaw's package.json via require.resolve
     try {
-      const { execSync } = require("node:child_process");
-      const out = execSync("openclaw --version", { timeout: 5000 }).toString().trim();
-      cachedGatewayVersion = out || "unknown";
+      const resolved = require.resolve("openclaw");
+      const pkgPath = join(dirname(resolved), "package.json");
+      const pkg = JSON.parse(readFileSync(pkgPath, "utf8"));
+      cachedGatewayVersion = pkg.version ?? "unknown";
     } catch {
       cachedGatewayVersion = "unknown";
     }
