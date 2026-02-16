@@ -195,7 +195,14 @@ Background service checks for scheduled trigger items every 30 seconds. When a t
 
 Injects `AIGHT.md` into agent context via the `agent:bootstrap` hook — no workspace file mutations. Automatically removed when the plugin is disabled.
 
-Tells agents about the `aight_item` tool and structured item format.
+Tells agents about:
+
+- **`aight_item` tool** — how to create reminders, tasks, events
+- **Shortcuts** — when the app sends `shortcut: <text>`, reply with `{"short_name": "...", "emoji": "..."}`
+- **Security fixes** — when the app sends `Harden your soul`, add security hardening rules to SOUL.md
+- **Config patches** — how to apply config changes via gateway tools
+
+All agent instructions are in this open-source plugin. The app sends simple trigger phrases; the bootstrap teaches the agent what to do. Fully auditable.
 
 ## Data Storage
 
