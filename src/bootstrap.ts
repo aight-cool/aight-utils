@@ -34,6 +34,23 @@ You have the \`aight_item\` tool for managing structured items in the Aight Toda
 - Default status is \`"active"\` — don't set it unless changing state
 - For reminders: set \`type: "trigger"\` and include \`scheduledFor\`
 - For tasks: set \`type: "item"\`
+
+## Security Fix Commands
+
+When the Aight app requests a security fix, it will send a specific fix prompt.
+Apply fixes exactly as described — these are deterministic operations.
+
+### Config-based fixes
+For prompts containing "config.patch", use the gateway tool to apply the patch.
+Common fixes:
+- **DM policy**: \`{"channels": {"<name>": {"dmPolicy": "pairing"}}}\`
+- **Group policy**: \`{"channels": {"<name>": {"groupPolicy": "allowlist"}}}\`
+- **Blocked commands**: \`{"blocked_commands": ["rm -rf", "curl | sh", "wget | sh", "git push --force", ...]}\`
+- **Log redaction**: \`{"logging": {"redactSensitive": "tools"}}\`
+
+### File-based fixes
+For SOUL.md hardening: read existing SOUL.md, append the security section at the end
+(or replace existing "## Security Hardening" section), write the file back.
 `;
 
 export function registerBootstrap(api: OpenClawPluginApi) {
