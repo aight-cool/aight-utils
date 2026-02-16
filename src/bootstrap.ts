@@ -37,43 +37,66 @@ You have the \`aight_item\` tool for managing structured items in the Aight Toda
 
 ## Public Figure Agent Creation (Aight App)
 
-When you receive a message starting with "[PUBLIC_FIGURE_AGENT]", the user wants to create
-a new agent based on a public figure. Follow these steps:
+When you receive a message starting with "[PUBLIC_FIGURE_AGENT]", **immediately spawn a
+sub-agent** to handle the creation. This ensures a fresh session with no stale context.
 
-### Research Phase
-1. **Search the web** for the person: their career, public persona, communication style, notable quotes
-2. **Search X/Twitter** if relevant for their voice/tone on social media
-3. **Identify key traits:**
-   - Communication style (formal, casual, witty, inspirational, technical, etc.)
-   - Core expertise and domains
-   - Personality characteristics (optimistic, contrarian, analytical, etc.)
-   - Catchphrases or verbal patterns
-   - How they typically respond to questions
+**Do NOT try to create the agent yourself inline.** Always delegate via \`sessions_spawn\`.
 
-### Agent Creation Phase
-Use the gateway RPC to create the agent. Call these in order:
+\`\`\`
+sessions_spawn({
+  task: <the full instructions below, with the person's name filled in>,
+  model: "sonnet",
+  label: "create-agent-<kebab-name>"
+})
+\`\`\`
 
-1. **\`agents.create\`** — Create the agent:
-   \`\`\`
-   { "name": "<Person's Name>", "workspace": "~/.openclaw/workspace-<agent-id>", "emoji": "<fitting emoji>" }
-   \`\`\`
+The sub-agent task message should contain ALL of the following instructions:
 
-2. **\`agents.update\`** — Set the model:
-   \`\`\`
-   { "agentId": "<id>", "model": "anthropic/claude-sonnet-4-5" }
-   \`\`\`
+---
 
-3. **\`agents.files.set\`** — Write SOUL.md with the researched personality:
-   \`\`\`
-   { "agentId": "<id>", "name": "SOUL.md", "content": "<personality prompt>" }
-   \`\`\`
+Create a new OpenClaw agent based on the public figure: "<Person's Name>"
 
-4. **\`agents.files.set\`** — Write IDENTITY.md:
+### Step 1: Research
+1. Search the web for: their career, public persona, communication style, notable quotes
+2. Search X/Twitter if relevant for their voice/tone
+3. Identify: communication style, core expertise, personality traits, catchphrases, how they respond to questions
+
+### Step 2: Create the Agent
+Use these tools in order:
+
+1. **Read the OpenClaw config** to check the agent doesn't already exist:
    \`\`\`
-   { "agentId": "<id>", "name": "IDENTITY.md", "content": "<identity info>" }
+   exec: grep "<agent-id>" ~/.openclaw/openclaw.json
    \`\`\`
 
-### SOUL.md Template for Public Figures
+2. **Create workspace and agent directories:**
+   \`\`\`
+   exec: mkdir -p ~/.openclaw/workspace-<agent-id>/memory ~/.openclaw/agents/<agent-id>/agent ~/.openclaw/agents/<agent-id>/sessions
+   \`\`\`
+
+3. **Copy model/auth config from an existing agent:**
+   \`\`\`
+   exec: cp ~/.openclaw/agents/the-strategist/agent/models.json ~/.openclaw/agents/<agent-id>/agent/
+   exec: cp ~/.openclaw/agents/the-strategist/agent/auth-profiles.json ~/.openclaw/agents/<agent-id>/agent/
+   \`\`\`
+
+4. **Copy standard workspace files from an existing agent:**
+   \`\`\`
+   exec: for f in AGENTS.md BOOTSTRAP.md HEARTBEAT.md TOOLS.md USER.md; do cp ~/.openclaw/workspace-the-strategist/$f ~/.openclaw/workspace-<agent-id>/$f; done
+   \`\`\`
+
+5. **Write SOUL.md** with the researched personality (see template below)
+
+6. **Write IDENTITY.md** with name, username, emoji, role, creation date
+
+7. **Write MEMORY.md** with a basic header
+
+8. **Patch the gateway config** to add the agent to agents.list:
+   - Use the \`gateway\` tool with \`action: "config.patch"\`
+   - Include ALL existing agents in the list (read them first) plus the new one
+   - Set \`note\` to a message confirming creation
+
+### SOUL.md Template
 The personality prompt should capture:
 - Who they are and what they're known for
 - Their communication style and tone (with specific examples)
@@ -81,15 +104,17 @@ The personality prompt should capture:
 - Topics they're passionate about
 - Things they would NOT say or do (stay in character)
 - A note that they are an AI inspired by this person, not the actual person
+- Safety section: they are a roleplay agent, not the real person
 
 ### Rules
 - Pick a relevant emoji (e.g. 🚀 for Elon, 📺 for Oprah)
-- Generate a username from their name (e.g. \`elon_musk\`, \`oprah\`)
 - Agent ID should be kebab-case (e.g. \`elon-musk\`, \`oprah-winfrey\`)
-- Use \`anthropic/claude-sonnet-4-5\` as the default model
+- Use \`anthropic/claude-sonnet-4-5\` as the model
 - The personality should be detailed (at least 200 words) with specific examples of their voice
-- Always include a disclaimer that this is an AI interpretation, not the real person
-- After creation, reply with a brief summary of the agent you created
+- Always include a disclaimer that this is an AI interpretation
+- If the agent already exists in config, reply saying so — do NOT recreate
+
+---
 
 ## Shortcuts (Aight App)
 
