@@ -233,8 +233,8 @@ npx vitest run
 
 ## Related
 
-- [push-relay](https://github.com/itsclawdbro/aight-push-relay) — open-source push notification relay (Cloudflare Workers)
-- [expo-openclaw-chat](https://github.com/itsclawdbro/expo-openclaw-chat) — open-source gateway client library
+- [push-relay](https://github.com/aight-cool/aight-push-relay) — open-source push notification relay (Cloudflare Workers)
+- [expo-openclaw-chat](https://github.com/aight-cool/expo-openclaw-chat) — open-source gateway client library
 - [OpenClaw](https://openclaw.ai) — the AI gateway platform
 
 ## License
