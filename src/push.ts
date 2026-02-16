@@ -218,13 +218,14 @@ export function registerPush(api: OpenClawPluginApi, _config: AightConfig) {
         return;
       }
 
+      // Test always sends a visible push regardless of privacy mode
       const result = await sendPush(
         device.deviceId,
         {
           title: "Aight 🤙",
           body: "Push notifications are working!",
         },
-        _config,
+        { ..._config, push: { ..._config.push, mode: "rich" } },
       );
 
       respond(true, result);
