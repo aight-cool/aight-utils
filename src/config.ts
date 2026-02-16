@@ -43,16 +43,55 @@ export function registerConfig(api: OpenClawPluginApi) {
 
   api.registerGatewayMethod(
     "aight.config.patch",
-    ({ params, respond }: GatewayRequestHandlerOptions) => {
+    async ({ params, respond }: GatewayRequestHandlerOptions) => {
       if (!params || typeof params !== "object") {
         respond(false, { error: "params must be an object" });
         return;
       }
-      respond(true, {
-        ok: true,
-        note: "Config patch received. Apply via gateway config for persistence.",
-        patch: params,
-      });
+      try {
+        // Load current config, merge patch into plugin config, write back
+        const currentConfig = await api.runtime.config.loadConfig();
+        const pluginEntry = (currentConfig as any)?.plugins?.entries?.["aight-utils"] ?? {};
+        const currentPluginConfig = pluginEntry.config ?? {};
+
+        // Deep merge the patch into plugin config
+        const merged = { ...currentPluginConfig };
+        for (const [key, value] of Object.entries(params as Record<string, unknown>)) {
+          if (
+            value &&
+            typeof value === "object" &&
+            !Array.isArray(value) &&
+            merged[key] &&
+            typeof merged[key] === "object"
+          ) {
+            merged[key] = { ...merged[key], ...value };
+          } else {
+            merged[key] = value;
+          }
+        }
+
+        // Write updated config
+        const updatedConfig = {
+          ...(currentConfig as Record<string, unknown>),
+          plugins: {
+            ...((currentConfig as any)?.plugins ?? {}),
+            entries: {
+              ...((currentConfig as any)?.plugins?.entries ?? {}),
+              "aight-utils": {
+                ...pluginEntry,
+                config: merged,
+              },
+            },
+          },
+        };
+
+        await api.runtime.config.writeConfigFile(updatedConfig as any);
+        respond(true, { ok: true, config: getClientSafeConfig(merged as AightConfig) });
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        api.logger.error(`[aight-utils] config.patch failed: ${msg}`);
+        respond(false, { error: msg });
+      }
     },
   );
 
