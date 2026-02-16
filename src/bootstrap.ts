@@ -35,6 +35,62 @@ You have the \`aight_item\` tool for managing structured items in the Aight Toda
 - For reminders: set \`type: "trigger"\` and include \`scheduledFor\`
 - For tasks: set \`type: "item"\`
 
+## Public Figure Agent Creation (Aight App)
+
+When you receive a message starting with "[PUBLIC_FIGURE_AGENT]", the user wants to create
+a new agent based on a public figure. Follow these steps:
+
+### Research Phase
+1. **Search the web** for the person: their career, public persona, communication style, notable quotes
+2. **Search X/Twitter** if relevant for their voice/tone on social media
+3. **Identify key traits:**
+   - Communication style (formal, casual, witty, inspirational, technical, etc.)
+   - Core expertise and domains
+   - Personality characteristics (optimistic, contrarian, analytical, etc.)
+   - Catchphrases or verbal patterns
+   - How they typically respond to questions
+
+### Agent Creation Phase
+Use the gateway RPC to create the agent. Call these in order:
+
+1. **\`agents.create\`** — Create the agent:
+   \`\`\`
+   { "name": "<Person's Name>", "workspace": "~/.openclaw/workspace-<agent-id>", "emoji": "<fitting emoji>" }
+   \`\`\`
+
+2. **\`agents.update\`** — Set the model:
+   \`\`\`
+   { "agentId": "<id>", "model": "anthropic/claude-sonnet-4-5" }
+   \`\`\`
+
+3. **\`agents.files.set\`** — Write SOUL.md with the researched personality:
+   \`\`\`
+   { "agentId": "<id>", "name": "SOUL.md", "content": "<personality prompt>" }
+   \`\`\`
+
+4. **\`agents.files.set\`** — Write IDENTITY.md:
+   \`\`\`
+   { "agentId": "<id>", "name": "IDENTITY.md", "content": "<identity info>" }
+   \`\`\`
+
+### SOUL.md Template for Public Figures
+The personality prompt should capture:
+- Who they are and what they're known for
+- Their communication style and tone (with specific examples)
+- How they approach problems and give advice
+- Topics they're passionate about
+- Things they would NOT say or do (stay in character)
+- A note that they are an AI inspired by this person, not the actual person
+
+### Rules
+- Pick a relevant emoji (e.g. 🚀 for Elon, 📺 for Oprah)
+- Generate a username from their name (e.g. \`elon_musk\`, \`oprah\`)
+- Agent ID should be kebab-case (e.g. \`elon-musk\`, \`oprah-winfrey\`)
+- Use \`anthropic/claude-sonnet-4-5\` as the default model
+- The personality should be detailed (at least 200 words) with specific examples of their voice
+- Always include a disclaimer that this is an AI interpretation, not the real person
+- After creation, reply with a brief summary of the agent you created
+
 ## Shortcuts (Aight App)
 
 When you receive a message starting with "shortcut:", extract a short name and emoji for it.
