@@ -2,7 +2,7 @@
  * Shortcuts RPC — aight.shortcuts.parse
  *
  * Uses the cheapest available model to extract a short name and emoji.
- * Reads provider config from the gateway — works with any configured provider.
+ * Reads provider config from the gateway — works with any configured model.
  */
 
 import type { OpenClawPluginApi, GatewayRequestHandlerOptions } from "openclaw/plugin-sdk";
@@ -23,6 +23,7 @@ function resolveApiKey(
   env: Record<string, string>,
 ): string | undefined {
   if (provider.apiKey) return provider.apiKey;
+  // Standard env var names
   const envKeys: Record<string, string> = {
     anthropic: "ANTHROPIC_API_KEY",
     openai: "OPENAI_API_KEY",
@@ -52,7 +53,9 @@ async function callAnthropic(
     }),
   });
   if (!res.ok) throw new Error(`Anthropic ${res.status}`);
-  const data = (await res.json()) as { content: Array<{ text: string }> };
+  const data = (await res.json()) as {
+    content: Array<{ text: string }>;
+  };
   return data.content?.[0]?.text ?? "";
 }
 
@@ -82,65 +85,35 @@ async function callOpenAI(
   return data.choices?.[0]?.message?.content ?? "";
 }
 
-/** Well-known cheap models per provider — used even if not in user's model list */
-const CHEAP_DEFAULTS: Record<string, string> = {
-  anthropic: "claude-haiku-3-5-20241022",
-  openai: "gpt-4o-mini",
-};
-
-/** Pick cheapest model for a simple extraction task */
+/** Pick cheapest model — prefer haiku/mini, fall back to first available */
 function pickModel(
   providers: Record<string, ProviderConfig>,
   env: Record<string, string>,
-): {
-  providerId: string;
-  provider: ProviderConfig;
-  model: string;
-  apiKey: string;
-} | null {
+): { providerId: string; provider: ProviderConfig; model: string; apiKey: string } | null {
+  // Priority: anthropic haiku > openai mini > any anthropic > any openai-compat > ollama
   const priority = ["anthropic", "openai", ...Object.keys(providers)];
-  const cheapPatterns = ["haiku", "mini", "flash", "nano"];
+  const cheapModels = ["haiku", "mini", "flash"];
 
-  // First: use known cheap defaults for available providers (even if not in model list)
-  for (const pid of priority) {
-    const p = providers[pid];
-    if (!p) continue;
-    const apiKey = resolveApiKey(pid, p, env);
-    if (!apiKey && pid !== "ollama") continue;
-    if (CHEAP_DEFAULTS[pid]) {
-      return {
-        providerId: pid,
-        provider: p,
-        model: CHEAP_DEFAULTS[pid],
-        apiKey: apiKey ?? "",
-      };
-    }
-  }
-
-  // Second: find any cheap model in configured models
   for (const pid of priority) {
     const p = providers[pid];
     if (!p?.models?.length) continue;
     const apiKey = resolveApiKey(pid, p, env);
     if (!apiKey && pid !== "ollama") continue;
-    const cheap = p.models.find((m) => cheapPatterns.some((c) => m.id.toLowerCase().includes(c)));
+
+    // Try cheap model first
+    const cheap = p.models.find((m) => cheapModels.some((c) => m.id.toLowerCase().includes(c)));
     if (cheap) {
       return { providerId: pid, provider: p, model: cheap.id, apiKey: apiKey ?? "" };
     }
   }
 
-  // Last resort: first provider with any model
+  // Fall back to first provider with a key
   for (const pid of priority) {
     const p = providers[pid];
     if (!p?.models?.length) continue;
     const apiKey = resolveApiKey(pid, p, env);
     if (!apiKey && pid !== "ollama") continue;
-    return {
-      providerId: pid,
-      provider: p,
-      model: p.models[0].id,
-      apiKey: apiKey ?? "",
-    };
+    return { providerId: pid, provider: p, model: p.models[0].id, apiKey: apiKey ?? "" };
   }
 
   return null;
@@ -166,8 +139,6 @@ export function registerShortcuts(api: OpenClawPluginApi) {
         return;
       }
 
-      api.logger.info(`[aight-utils] shortcuts.parse using ${picked.providerId}/${picked.model}`);
-
       try {
         const isAnthropic = picked.provider.api === "anthropic-messages";
         const baseUrl = picked.provider.baseUrl ?? "";
@@ -188,9 +159,7 @@ export function registerShortcuts(api: OpenClawPluginApi) {
         const parsed = JSON.parse(match[0]);
         respond(true, { name: parsed.short_name, emoji: parsed.emoji });
       } catch (err) {
-        respond(false, {
-          error: err instanceof Error ? err.message : String(err),
-        });
+        respond(false, { error: err instanceof Error ? err.message : String(err) });
       }
     },
   );
