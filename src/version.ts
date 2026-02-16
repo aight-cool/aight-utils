@@ -25,6 +25,26 @@ function getCurrentVersion(): string {
   return cachedVersion!;
 }
 
+let cachedGatewayVersion: string | null = null;
+
+function getGatewayVersion(): string {
+  if (cachedGatewayVersion) return cachedGatewayVersion;
+  try {
+    // openclaw's package.json is resolvable from plugin context
+    const openclawPkg = require("openclaw/package.json");
+    cachedGatewayVersion = openclawPkg.version ?? "unknown";
+  } catch {
+    try {
+      const { execSync } = require("node:child_process");
+      const out = execSync("openclaw --version", { timeout: 5000 }).toString().trim();
+      cachedGatewayVersion = out || "unknown";
+    } catch {
+      cachedGatewayVersion = "unknown";
+    }
+  }
+  return cachedGatewayVersion!;
+}
+
 async function getLatestVersion(): Promise<string> {
   if (cachedLatest && Date.now() - cachedLatest.checkedAt < CACHE_TTL_MS) {
     return cachedLatest.version;
@@ -49,10 +69,12 @@ export function registerVersion(api: OpenClawPluginApi) {
     try {
       const current = getCurrentVersion();
       const latest = await getLatestVersion();
+      const gateway = getGatewayVersion();
       respond(true, {
         current,
         latest,
         updateAvailable: latest !== "unknown" && current !== latest,
+        gatewayVersion: gateway,
       });
     } catch (err) {
       respond(false, {
