@@ -101,7 +101,7 @@ export function registerConfig(api: OpenClawPluginApi) {
       ok: true,
       version: "0.1.0",
       push: {
-        mode: cfg.push?.mode ?? "private",
+        mode: cfg.push?.mode ?? "rich",
         relayUrl: cfg.push?.relayUrl ?? "https://push.aight.app",
       },
       today: {

@@ -106,7 +106,7 @@ export async function sendPush(
   }
 
   const relayUrl = config.push?.relayUrl ?? "https://push-relay.brunobar79.workers.dev";
-  const mode = config.push?.mode ?? "private";
+  const mode = config.push?.mode ?? "rich";
 
   const pushBody: Record<string, unknown> = {
     token: device.pushToken,
