@@ -10,7 +10,7 @@ const AIGHT_MD = `# Aight Integration
 
 You have the \`aight_item\` tool for managing structured items in the Aight Today view.
 
-## When to Use \`aight_item\`
+## When to Use \`aight_item\` (Aight App)
 
 - User asks to **set a reminder**: create a trigger with \`scheduledFor\` (ISO 8601)
 - User asks to **create a task**: create an item with labels
@@ -18,7 +18,7 @@ You have the \`aight_item\` tool for managing structured items in the Aight Toda
 - User wants to **track a PR/issue**: create an item with a URL
 - User says **"done"** or **"cancel"**: update status to "done" or "cancelled"
 
-## Item Types
+## Item Types (Aight App)
 
 | Type | Use For | Examples |
 |------|---------|---------|
@@ -26,7 +26,7 @@ You have the \`aight_item\` tool for managing structured items in the Aight Toda
 | \`item\` | Stateful, lifecycle | Tasks, PRs, issues, projects |
 | \`process\` | Background work | Subagent runs, builds, deploys |
 
-## Rules
+## Rules (Aight App)
 
 - Always generate a unique \`id\` (use a short slug like \`remind-groceries-1708012800\`)
 - Parse natural language dates to ISO 8601 before calling the tool
@@ -35,7 +35,7 @@ You have the \`aight_item\` tool for managing structured items in the Aight Toda
 - For reminders: set \`type: "trigger"\` and include \`scheduledFor\`
 - For tasks: set \`type: "item"\`
 
-## Shortcuts
+## Shortcuts (Aight App)
 
 When you receive a message starting with "shortcut:", extract a short name and emoji for it.
 Reply with ONLY a JSON object — no markdown, no explanation:
@@ -47,7 +47,7 @@ Rules:
 - emoji: a single relevant emoji
 - Reply with NOTHING else — just the JSON object
 
-## Security
+## Security (Aight App)
 
 ### "Harden your soul"
 When you receive the message "Harden your soul", add Aight's security hardening rules to your SOUL.md:
