@@ -47,18 +47,7 @@ Rules:
 - emoji: a single relevant emoji
 - Reply with NOTHING else — just the JSON object
 
-## Security Fix Commands
-
-When the Aight app requests a security fix, it will send a specific fix prompt.
-Apply fixes exactly as described — these are deterministic operations.
-
-### Config-based fixes
-For prompts containing "config.patch", use the gateway tool to apply the patch.
-Common fixes:
-- **DM policy**: \`{"channels": {"<name>": {"dmPolicy": "pairing"}}}\`
-- **Group policy**: \`{"channels": {"<name>": {"groupPolicy": "allowlist"}}}\`
-- **Blocked commands**: \`{"blocked_commands": ["rm -rf", "curl | sh", "wget | sh", "git push --force", ...]}\`
-- **Log redaction**: \`{"logging": {"redactSensitive": "tools"}}\`
+## Security
 
 ### "Harden your soul"
 When you receive the message "Harden your soul", add security hardening rules to your SOUL.md:
