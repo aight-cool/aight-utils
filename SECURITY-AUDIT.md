@@ -43,9 +43,9 @@
 
 **Status: ✅ FIXED** — Data now placed under `custom` key instead of being spread into root.
 
-#### M5 — (NEW) `timingSafeEqual` leaks token length via early return (`auth.ts:5`)
+#### M5 — `timingSafeEqual` leaks token length via early return (`auth.ts:5`)
 
-**Status: ⚠️ NOTED** — The length check `if (aBuf.byteLength !== bBuf.byteLength) return false` reveals correct token length via timing. Very low risk on Cloudflare Workers (network jitter dominates). Textbook fix: compare HMAC digests to normalize input lengths.
+**Status: ✅ FIXED** — Replaced with HMAC-based constant-time comparison. Input is now versioned (`v1:${deviceToken}`), and comparison uses manual XOR-based logic — no `timingSafeEqual` dependency, no length oracle.
 
 ---
 
@@ -53,7 +53,7 @@
 
 #### L1 — No rate limiting on push relay endpoints
 
-**Status: OPEN** — Consider per-token rate limits.
+**Status: ✅ FIXED** — 20 req/min per IP rate limiting added on `/register` endpoint in-code.
 
 #### L2 — `cachedToken` is module-level in Worker (`apns.ts`)
 
@@ -74,10 +74,10 @@
 | Severity  | Total | Fixed | Open/Accepted |
 | --------- | ----- | ----- | ------------- |
 | 🔴 High   | 3     | 2     | 1 (accepted)  |
-| 🟡 Medium | 5     | 4     | 1 (noted)     |
-| 🟢 Low    | 4     | 1     | 3             |
+| 🟡 Medium | 5     | 5     | 0             |
+| 🟢 Low    | 4     | 2     | 2             |
 
-**All high-severity actionable findings are resolved.** The codebase is in good shape for shipping.
+**All high and medium severity findings are resolved.** Remaining open items are low-risk and informational. Parent directory permissions hardened to `0o700`. Error handling improved with proper logging on skipped pushes and background failures.
 
 ---
 
@@ -85,3 +85,4 @@
 
 - **v1 (2026-02-15 13:03 EST):** Initial scan — 3 high, 4 medium, 4 low findings
 - **v2 (2026-02-15 13:09 EST):** Re-audit after fixes by @the_code_architect — all high/medium actionable findings resolved, 1 new medium noted (M5)
+- **v3 (2026-02-16 01:19 EST):** Final update — M5 fixed (HMAC versioned + XOR constant-time comparison), L1 fixed (rate limiting on `/register`), parent dir `0o700`, `nodejs_compat` flag added, error logging improvements. All medium findings now resolved.
