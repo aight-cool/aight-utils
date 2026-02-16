@@ -32,7 +32,7 @@ This is the code that runs on **your** gateway when you use Aight. Every line is
        │                                   ▼
        │                ┌──────────────────────────────────┐
        │                │    push-relay (CF Worker)         │
-       │                │    push-relay.brunobar79.workers.dev │
+       │                │    push.aight.cool │
        │                │    (open source, stateless)       │
        └────────────────┤                                    │
           APNs / FCM    │  ┌────────────┐  ┌─────────────┐  │
@@ -73,7 +73,7 @@ Or from the Aight app: tap **Enable Notifications** during onboarding.
         config: {
           push: {
             mode: "rich", // "private" (silent) or "rich" (with preview)
-            relayUrl: "https://push-relay.brunobar79.workers.dev",
+            relayUrl: "https://push.aight.cool",
           },
           today: {
             enabled: true,

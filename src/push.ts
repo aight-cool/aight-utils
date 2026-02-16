@@ -105,7 +105,7 @@ export async function sendPush(
     return { ok: false, error: `No sendKey for device ${deviceId} — re-register to obtain one` };
   }
 
-  const relayUrl = config.push?.relayUrl ?? "https://push-relay.brunobar79.workers.dev";
+  const relayUrl = config.push?.relayUrl ?? "https://push.aight.cool";
   const mode = config.push?.mode ?? "rich";
 
   const pushBody: Record<string, unknown> = {
@@ -177,7 +177,7 @@ export function registerPush(api: OpenClawPluginApi, _config: AightConfig) {
       api.logger.info(`[aight-utils] Push token registered for device ${deviceId}`);
 
       // Obtain sendKey from relay in background
-      const relayUrl = _config.push?.relayUrl ?? "https://push-relay.brunobar79.workers.dev";
+      const relayUrl = _config.push?.relayUrl ?? "https://push.aight.cool";
       obtainSendKey(relayUrl, pushToken)
         .then((sendKey) => {
           // Update the token with the sendKey
