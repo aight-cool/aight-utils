@@ -6,6 +6,15 @@ function createMockApi(pluginConfig: any = {}) {
   return {
     api: {
       pluginConfig,
+      config: { plugins: { entries: { "aight-utils": { config: pluginConfig } } } },
+      runtime: {
+        config: {
+          writeConfigFile: vi.fn(),
+          loadConfig: vi
+            .fn()
+            .mockReturnValue({ plugins: { entries: { "aight-utils": { config: pluginConfig } } } }),
+        },
+      },
       logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
       registerGatewayMethod: (method: string, handler: Function) => {
         methods[method] = handler;
@@ -24,14 +33,14 @@ describe("config RPC", () => {
     expect(respond).toHaveBeenCalledWith(true, { push: { mode: "rich" } });
   });
 
-  it("aight.config.patch returns patch with note", () => {
+  it("aight.config.patch returns patch with note", async () => {
     const { api, methods } = createMockApi();
     registerConfig(api);
     const respond = vi.fn();
-    methods["aight.config.patch"]({ params: { push: { mode: "private" } }, respond });
+    await methods["aight.config.patch"]({ params: { push: { mode: "private" } }, respond });
     expect(respond).toHaveBeenCalledWith(
       true,
-      expect.objectContaining({ ok: true, patch: { push: { mode: "private" } } }),
+      expect.objectContaining({ config: expect.objectContaining({ push: { mode: "private" } }) }),
     );
   });
 

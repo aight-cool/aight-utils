@@ -159,32 +159,37 @@ export function registerPush(api: OpenClawPluginApi, _config: AightConfig) {
         return;
       }
 
+      const deviceId = params.deviceId as string;
+      const pushToken = params.pushToken as string;
+      const platform = params.platform as "ios" | "android";
+      const sandbox = !!params.sandbox;
+
       // Register immediately (respond fast)
       registerToken({
-        deviceId: params.deviceId,
-        pushToken: params.pushToken,
-        platform: params.platform,
-        sandbox: !!params.sandbox,
+        deviceId,
+        pushToken,
+        platform,
+        sandbox,
         registeredAt: new Date().toISOString(),
       });
 
-      respond(true, { ok: true, deviceId: params.deviceId });
-      api.logger.info(`[aight-utils] Push token registered for device ${params.deviceId}`);
+      respond(true, { ok: true, deviceId });
+      api.logger.info(`[aight-utils] Push token registered for device ${deviceId}`);
 
       // Obtain sendKey from relay in background
       const relayUrl = _config.push?.relayUrl ?? "https://push-relay.brunobar79.workers.dev";
-      obtainSendKey(relayUrl, params.pushToken)
+      obtainSendKey(relayUrl, pushToken)
         .then((sendKey) => {
           // Update the token with the sendKey
           registerToken({
-            deviceId: params.deviceId,
-            pushToken: params.pushToken,
-            platform: params.platform,
-            sandbox: !!params.sandbox,
+            deviceId,
+            pushToken,
+            platform,
+            sandbox,
             sendKey,
             registeredAt: new Date().toISOString(),
           });
-          api.logger.info(`[aight-utils] sendKey obtained for device ${params.deviceId}`);
+          api.logger.info(`[aight-utils] sendKey obtained for device ${deviceId}`);
         })
         .catch((err) => {
           const msg = err instanceof Error ? err.message : String(err);

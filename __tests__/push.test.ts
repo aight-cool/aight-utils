@@ -56,15 +56,33 @@ describe("push token store", () => {
   });
 
   it("updates existing token by deviceId", () => {
-    registerToken({ deviceId: "dev-1", pushToken: "old", platform: "ios", sendKey: "k1", registeredAt: "" });
-    registerToken({ deviceId: "dev-1", pushToken: "new", platform: "ios", sendKey: "k2", registeredAt: "" });
+    registerToken({
+      deviceId: "dev-1",
+      pushToken: "old",
+      platform: "ios",
+      sendKey: "k1",
+      registeredAt: "",
+    });
+    registerToken({
+      deviceId: "dev-1",
+      pushToken: "new",
+      platform: "ios",
+      sendKey: "k2",
+      registeredAt: "",
+    });
     expect(loadTokens()).toHaveLength(1);
     expect(loadTokens()[0].pushToken).toBe("new");
     expect(loadTokens()[0].sendKey).toBe("k2");
   });
 
   it("unregisters a token", () => {
-    registerToken({ deviceId: "dev-1", pushToken: "abc", platform: "ios", sendKey: "k", registeredAt: "" });
+    registerToken({
+      deviceId: "dev-1",
+      pushToken: "abc",
+      platform: "ios",
+      sendKey: "k",
+      registeredAt: "",
+    });
     expect(unregisterToken("dev-1")).toBe(true);
     expect(loadTokens()).toHaveLength(0);
   });
@@ -89,7 +107,13 @@ describe("sendPush", () => {
   });
 
   it("sends to relay in private mode with sendKey", async () => {
-    registerToken({ deviceId: "dev-1", pushToken: "tok", platform: "ios", sendKey: "sk123", registeredAt: "" });
+    registerToken({
+      deviceId: "dev-1",
+      pushToken: "tok",
+      platform: "ios",
+      sendKey: "sk123",
+      registeredAt: "",
+    });
     const mockFetch = vi.fn().mockResolvedValue({ ok: true, text: () => "" });
     vi.stubGlobal("fetch", mockFetch);
 
@@ -110,7 +134,13 @@ describe("sendPush", () => {
   });
 
   it("includes text in rich mode", async () => {
-    registerToken({ deviceId: "dev-1", pushToken: "tok", platform: "ios", sendKey: "sk123", registeredAt: "" });
+    registerToken({
+      deviceId: "dev-1",
+      pushToken: "tok",
+      platform: "ios",
+      sendKey: "sk123",
+      registeredAt: "",
+    });
     const mockFetch = vi.fn().mockResolvedValue({ ok: true, text: () => "" });
     vi.stubGlobal("fetch", mockFetch);
 
@@ -146,7 +176,9 @@ describe("push RPC", () => {
 
   it("registers push token via RPC and obtains sendKey in background", async () => {
     let fetchResolve: (v: unknown) => void;
-    const fetchPromise = new Promise((r) => { fetchResolve = r; });
+    const fetchPromise = new Promise((r) => {
+      fetchResolve = r;
+    });
     const mockFetch = vi.fn().mockReturnValue(fetchPromise);
     vi.stubGlobal("fetch", mockFetch);
 
@@ -218,7 +250,13 @@ describe("push RPC", () => {
   it("unregisters device", () => {
     const { api, methods } = createMockApi();
     registerPush(api, {});
-    registerToken({ deviceId: "dev-1", pushToken: "tok", platform: "ios", sendKey: "k", registeredAt: "" });
+    registerToken({
+      deviceId: "dev-1",
+      pushToken: "tok",
+      platform: "ios",
+      sendKey: "k",
+      registeredAt: "",
+    });
     const respond = vi.fn();
     methods["aight.push.unregister"]({ params: { deviceId: "dev-1" }, respond });
     expect(respond).toHaveBeenCalledWith(true, { ok: true, deviceId: "dev-1" });
