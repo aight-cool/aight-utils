@@ -34,6 +34,12 @@
   "dependencies": {
     "@sinclair/typebox": "^0.34.0"
   },
+  "engines": {
+    "node": ">=20"
+  },
+  "peerDependencies": {
+    "openclaw": ">=2026.1.0"
+  },
   "devDependencies": {
     "@eslint/js": "^9.39.2",
     "eslint": "^9.39.2",

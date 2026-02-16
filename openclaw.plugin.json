@@ -18,7 +18,7 @@
           },
           "relayUrl": {
             "type": "string",
-            "default": "https://push-relay.brunobar79.workers.dev"
+            "default": "https://push.aight.app"
           },
           "deviceTokens": {
             "type": "object",
@@ -54,7 +54,7 @@
     },
     "push.relayUrl": {
       "label": "Push Relay URL",
-      "placeholder": "https://push-relay.brunobar79.workers.dev"
+      "placeholder": "https://push.aight.app"
     },
     "push.deviceTokens": {
       "label": "Registered Devices",
