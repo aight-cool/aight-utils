@@ -164,4 +164,24 @@ export function registerPush(api: OpenClawPluginApi, _config: AightConfig) {
       respond(true, { ok, deviceId });
     },
   );
+
+  api.registerGatewayMethod(
+    "aight.push.test",
+    async ({ params, respond }: GatewayRequestHandlerOptions) => {
+      const deviceId = typeof params?.deviceId === "string" ? params.deviceId : "";
+      const tokens = loadTokens();
+      const device = deviceId ? tokens.find((t) => t.deviceId === deviceId) : tokens[0];
+      if (!device) {
+        respond(false, { error: "No registered device" });
+        return;
+      }
+
+      const result = await sendPush(device.deviceId, {
+        title: "Aight 🤙",
+        body: "Push notifications are working!",
+      }, _config);
+
+      respond(true, result);
+    },
+  );
 }
