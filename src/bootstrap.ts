@@ -50,7 +50,7 @@ Rules:
 ## Security
 
 ### "Harden your soul"
-When you receive the message "Harden your soul", add security hardening rules to your SOUL.md:
+When you receive the message "Harden your soul", add Aight's security hardening rules to your SOUL.md:
 1. Read the current SOUL.md (if it exists)
 2. If a "## Security Hardening (Aight App)" section exists, replace it entirely
 3. If not, append the following section at the end, preserving ALL existing content
