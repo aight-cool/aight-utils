@@ -9,6 +9,9 @@ import { sendPush, loadTokens } from "./push.js";
 export function registerPushHook(api: OpenClawPluginApi) {
   try {
     api.on("agent_end", async (event, ctx) => {
+      api.logger.info(
+        `[aight-utils] agent_end fired session=${ctx.sessionKey} agent=${ctx.agentId}`,
+      );
       const tokens = loadTokens();
       if (tokens.length === 0) return;
 
@@ -35,11 +38,17 @@ export function registerPushHook(api: OpenClawPluginApi) {
         }
       }
 
-      if (!preview) return;
+      if (!preview) {
+        api.logger.info(`[aight-utils] No preview found, skipping push`);
+        return;
+      }
 
       // Skip internal/meta responses
       const skip = ["NO_REPLY", "REPLY_SKIP", "ANNOUNCE_SKIP", "HEARTBEAT_OK"];
-      if (skip.includes(preview.trim())) return;
+      if (skip.includes(preview.trim())) {
+        api.logger.info(`[aight-utils] Skipping meta response: ${preview.trim()}`);
+        return;
+      }
 
       const freshConfig = getPluginConfig(api);
 
