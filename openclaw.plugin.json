@@ -2,7 +2,7 @@
   "id": "aight-utils",
   "name": "Aight App Utils",
   "description": "Aight App: Push notifications, Today items, config RPC, and agent bootstrap",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "configSchema": {
     "type": "object",
     "additionalProperties": false,
@@ -13,7 +13,10 @@
         "properties": {
           "mode": {
             "type": "string",
-            "enum": ["private", "rich"],
+            "enum": [
+              "private",
+              "rich"
+            ],
             "default": "rich"
           },
           "relayUrl": {
@@ -26,11 +29,24 @@
               "type": "object",
               "additionalProperties": false,
               "properties": {
-                "token": { "type": "string" },
-                "platform": { "type": "string", "enum": ["ios", "android"] },
-                "registeredAt": { "type": "string" }
+                "token": {
+                  "type": "string"
+                },
+                "platform": {
+                  "type": "string",
+                  "enum": [
+                    "ios",
+                    "android"
+                  ]
+                },
+                "registeredAt": {
+                  "type": "string"
+                }
               },
-              "required": ["token", "platform"]
+              "required": [
+                "token",
+                "platform"
+              ]
             }
           }
         }
