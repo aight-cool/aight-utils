@@ -37,6 +37,10 @@ export function registerPushHook(api: OpenClawPluginApi) {
 
       if (!preview) return;
 
+      // Skip internal/meta responses
+      const skip = ["NO_REPLY", "REPLY_SKIP", "ANNOUNCE_SKIP", "HEARTBEAT_OK"];
+      if (skip.includes(preview.trim())) return;
+
       const freshConfig = getPluginConfig(api);
 
       // Resolve display name from gateway config agent list
