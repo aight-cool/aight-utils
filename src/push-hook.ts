@@ -16,6 +16,9 @@ export function registerPushHook(api: OpenClawPluginApi) {
       if (tokens.length === 0) return;
 
       const msgs = event.messages ?? [];
+      api.logger.info(
+        `[aight-utils] messages count=${msgs.length} roles=${msgs.map((m: any) => m.role).join(",")}`,
+      );
 
       // Extract last assistant message - try string and array content formats
       let preview = "";
