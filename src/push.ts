@@ -147,7 +147,7 @@ export async function sendPush(
 export function registerPush(api: OpenClawPluginApi, _config: AightConfig) {
   api.registerGatewayMethod(
     "aight.push.register",
-    async ({ params, respond }: GatewayRequestHandlerOptions) => {
+    ({ params, respond }: GatewayRequestHandlerOptions) => {
       if (
         !params ||
         typeof params !== "object" ||
@@ -159,30 +159,37 @@ export function registerPush(api: OpenClawPluginApi, _config: AightConfig) {
         return;
       }
 
-      const relayUrl = _config.push?.relayUrl ?? "https://push-relay.brunobar79.workers.dev";
-
-      // Obtain a sendKey from the relay
-      let sendKey: string;
-      try {
-        sendKey = await obtainSendKey(relayUrl, params.pushToken);
-      } catch (err) {
-        const msg = err instanceof Error ? err.message : String(err);
-        api.logger.warn(`[aight-utils] Failed to obtain sendKey: ${msg}`);
-        respond(false, { error: `Failed to register with push relay: ${msg}` });
-        return;
-      }
-
+      // Register immediately (respond fast)
       registerToken({
         deviceId: params.deviceId,
         pushToken: params.pushToken,
         platform: params.platform,
         sandbox: !!params.sandbox,
-        sendKey,
         registeredAt: new Date().toISOString(),
       });
 
-      api.logger.info(`[aight-utils] Push token registered for device ${params.deviceId}`);
       respond(true, { ok: true, deviceId: params.deviceId });
+      api.logger.info(`[aight-utils] Push token registered for device ${params.deviceId}`);
+
+      // Obtain sendKey from relay in background
+      const relayUrl = _config.push?.relayUrl ?? "https://push-relay.brunobar79.workers.dev";
+      obtainSendKey(relayUrl, params.pushToken)
+        .then((sendKey) => {
+          // Update the token with the sendKey
+          registerToken({
+            deviceId: params.deviceId,
+            pushToken: params.pushToken,
+            platform: params.platform,
+            sandbox: !!params.sandbox,
+            sendKey,
+            registeredAt: new Date().toISOString(),
+          });
+          api.logger.info(`[aight-utils] sendKey obtained for device ${params.deviceId}`);
+        })
+        .catch((err) => {
+          const msg = err instanceof Error ? err.message : String(err);
+          api.logger.warn(`[aight-utils] Failed to obtain sendKey: ${msg}`);
+        });
     },
   );
 

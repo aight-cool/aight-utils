@@ -144,26 +144,34 @@ describe("push RPC", () => {
     };
   }
 
-  it("registers push token via RPC (calls relay for sendKey)", async () => {
-    const mockFetch = vi.fn().mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve({ ok: true, sendKey: "derived-key" }),
-    });
+  it("registers push token via RPC and obtains sendKey in background", async () => {
+    let fetchResolve: (v: unknown) => void;
+    const fetchPromise = new Promise((r) => { fetchResolve = r; });
+    const mockFetch = vi.fn().mockReturnValue(fetchPromise);
     vi.stubGlobal("fetch", mockFetch);
 
     const { api, methods } = createMockApi();
     registerPush(api, { push: { relayUrl: "https://test.relay" } });
     const respond = vi.fn();
-    await methods["aight.push.register"]({
+    // Handler is sync — responds immediately
+    methods["aight.push.register"]({
       params: { deviceId: "dev-1", pushToken: "tok", platform: "ios" },
       respond,
     });
     expect(respond).toHaveBeenCalledWith(true, expect.objectContaining({ ok: true }));
+
+    // Resolve the background fetch
+    fetchResolve!({
+      ok: true,
+      json: () => Promise.resolve({ ok: true, sendKey: "derived-key" }),
+    });
+    // Let microtasks flush
+    await new Promise((r) => setTimeout(r, 10));
+
     expect(mockFetch).toHaveBeenCalledWith(
       "https://test.relay/register",
       expect.objectContaining({ method: "POST" }),
     );
-    // Verify sendKey was stored
     const token = loadTokens().find((t) => t.deviceId === "dev-1");
     expect(token).toBeTruthy();
     expect(token!.sendKey).toBe("derived-key");
@@ -180,7 +188,7 @@ describe("push RPC", () => {
     );
   });
 
-  it("handles relay registration failure", async () => {
+  it("handles relay registration failure gracefully", async () => {
     const mockFetch = vi.fn().mockResolvedValue({
       ok: false,
       status: 500,
@@ -191,14 +199,20 @@ describe("push RPC", () => {
     const { api, methods } = createMockApi();
     registerPush(api, { push: { relayUrl: "https://test.relay" } });
     const respond = vi.fn();
-    await methods["aight.push.register"]({
+    // Handler still responds ok (registers token, sendKey obtained in background)
+    methods["aight.push.register"]({
       params: { deviceId: "dev-1", pushToken: "tok", platform: "ios" },
       respond,
     });
-    expect(respond).toHaveBeenCalledWith(
-      false,
-      expect.objectContaining({ error: expect.stringContaining("500") }),
-    );
+    expect(respond).toHaveBeenCalledWith(true, expect.objectContaining({ ok: true }));
+
+    // Let background fetch fail
+    await new Promise((r) => setTimeout(r, 10));
+    // Token registered but no sendKey
+    const token = loadTokens().find((t) => t.deviceId === "dev-1");
+    expect(token).toBeTruthy();
+    expect(token!.sendKey).toBeUndefined();
+    expect(api.logger.warn).toHaveBeenCalled();
   });
 
   it("unregisters device", () => {
