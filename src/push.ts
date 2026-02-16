@@ -1,5 +1,11 @@
 /**
  * Push Notifications — aight.push.register, aight.push.unregister, sendPush()
+ *
+ * Auth model: the relay has a master secret. During device registration, the
+ * plugin calls relay /register with the device push token. The relay returns
+ * a sendKey = HMAC(masterSecret, pushToken). The plugin stores the sendKey
+ * alongside the device token. When sending a push, the plugin includes the
+ * sendKey. The relay recomputes the HMAC and verifies — zero state, no shared secrets.
  */
 
 import * as fs from "node:fs";
@@ -15,6 +21,7 @@ export interface DeviceToken {
   pushToken: string;
   platform: "ios" | "android";
   sandbox?: boolean;
+  sendKey?: string;
   registeredAt: string;
 }
 
@@ -56,6 +63,25 @@ export function unregisterToken(deviceId: string): boolean {
   return true;
 }
 
+// ── Relay Registration (get sendKey) ──
+
+async function obtainSendKey(relayUrl: string, pushToken: string): Promise<string> {
+  const res = await fetch(`${relayUrl}/register`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ token: pushToken }),
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Relay /register returned ${res.status}: ${text}`);
+  }
+
+  const data = (await res.json()) as { ok: boolean; sendKey: string };
+  if (!data.sendKey) throw new Error("Relay did not return a sendKey");
+  return data.sendKey;
+}
+
 // ── Push Sending ──
 
 export interface PushPayload {
@@ -75,16 +101,18 @@ export async function sendPush(
   if (!device) {
     return { ok: false, error: `No device token for ${deviceId}` };
   }
+  if (!device.sendKey) {
+    return { ok: false, error: `No sendKey for device ${deviceId} — re-register to obtain one` };
+  }
 
   const relayUrl = config.push?.relayUrl ?? "https://push-relay.brunobar79.workers.dev";
-  const relaySecret = config.push?.relaySecret;
   const mode = config.push?.mode ?? "private";
 
   const pushBody: Record<string, unknown> = {
     token: device.pushToken,
+    sendKey: device.sendKey,
     platform: device.platform,
     sandbox: device.sandbox ?? false,
-    silent: mode === "private" || !!payload.silent,
   };
 
   if (mode === "rich" && !payload.silent) {
@@ -97,16 +125,9 @@ export async function sendPush(
   }
 
   try {
-    const headers: Record<string, string> = {
-      "Content-Type": "application/json",
-    };
-    if (relaySecret) {
-      headers["Authorization"] = `Bearer ${relaySecret}`;
-    }
-
     const res = await fetch(`${relayUrl}/send`, {
       method: "POST",
-      headers,
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(pushBody),
     });
 
@@ -126,7 +147,7 @@ export async function sendPush(
 export function registerPush(api: OpenClawPluginApi, _config: AightConfig) {
   api.registerGatewayMethod(
     "aight.push.register",
-    ({ params, respond }: GatewayRequestHandlerOptions) => {
+    async ({ params, respond }: GatewayRequestHandlerOptions) => {
       if (
         !params ||
         typeof params !== "object" ||
@@ -138,11 +159,25 @@ export function registerPush(api: OpenClawPluginApi, _config: AightConfig) {
         return;
       }
 
+      const relayUrl = _config.push?.relayUrl ?? "https://push-relay.brunobar79.workers.dev";
+
+      // Obtain a sendKey from the relay
+      let sendKey: string;
+      try {
+        sendKey = await obtainSendKey(relayUrl, params.pushToken);
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        api.logger.warn(`[aight-utils] Failed to obtain sendKey: ${msg}`);
+        respond(false, { error: `Failed to register with push relay: ${msg}` });
+        return;
+      }
+
       registerToken({
         deviceId: params.deviceId,
         pushToken: params.pushToken,
         platform: params.platform,
         sandbox: !!params.sandbox,
+        sendKey,
         registeredAt: new Date().toISOString(),
       });
 
@@ -176,10 +211,14 @@ export function registerPush(api: OpenClawPluginApi, _config: AightConfig) {
         return;
       }
 
-      const result = await sendPush(device.deviceId, {
-        title: "Aight 🤙",
-        body: "Push notifications are working!",
-      }, _config);
+      const result = await sendPush(
+        device.deviceId,
+        {
+          title: "Aight 🤙",
+          body: "Push notifications are working!",
+        },
+        _config,
+      );
 
       respond(true, result);
     },

@@ -40,26 +40,31 @@ describe("push token store", () => {
   });
 
   it("registers a token", () => {
+    const before = loadTokens().length;
     registerToken({
       deviceId: "dev-1",
       pushToken: "abc123",
       platform: "ios",
+      sendKey: "key123",
       registeredAt: new Date().toISOString(),
     });
     const tokens = loadTokens();
-    expect(tokens).toHaveLength(1);
-    expect(tokens[0].deviceId).toBe("dev-1");
+    expect(tokens.length).toBe(before + 1);
+    const token = tokens.find((t) => t.deviceId === "dev-1");
+    expect(token).toBeTruthy();
+    expect(token!.sendKey).toBe("key123");
   });
 
   it("updates existing token by deviceId", () => {
-    registerToken({ deviceId: "dev-1", pushToken: "old", platform: "ios", registeredAt: "" });
-    registerToken({ deviceId: "dev-1", pushToken: "new", platform: "ios", registeredAt: "" });
+    registerToken({ deviceId: "dev-1", pushToken: "old", platform: "ios", sendKey: "k1", registeredAt: "" });
+    registerToken({ deviceId: "dev-1", pushToken: "new", platform: "ios", sendKey: "k2", registeredAt: "" });
     expect(loadTokens()).toHaveLength(1);
     expect(loadTokens()[0].pushToken).toBe("new");
+    expect(loadTokens()[0].sendKey).toBe("k2");
   });
 
   it("unregisters a token", () => {
-    registerToken({ deviceId: "dev-1", pushToken: "abc", platform: "ios", registeredAt: "" });
+    registerToken({ deviceId: "dev-1", pushToken: "abc", platform: "ios", sendKey: "k", registeredAt: "" });
     expect(unregisterToken("dev-1")).toBe(true);
     expect(loadTokens()).toHaveLength(0);
   });
@@ -76,8 +81,15 @@ describe("sendPush", () => {
     expect(result.error).toContain("No device token");
   });
 
-  it("sends to relay in private mode", async () => {
+  it("fails when no sendKey exists", async () => {
     registerToken({ deviceId: "dev-1", pushToken: "tok", platform: "ios", registeredAt: "" });
+    const result = await sendPush("dev-1", { title: "Test" }, {});
+    expect(result.ok).toBe(false);
+    expect(result.error).toContain("No sendKey");
+  });
+
+  it("sends to relay in private mode with sendKey", async () => {
+    registerToken({ deviceId: "dev-1", pushToken: "tok", platform: "ios", sendKey: "sk123", registeredAt: "" });
     const mockFetch = vi.fn().mockResolvedValue({ ok: true, text: () => "" });
     vi.stubGlobal("fetch", mockFetch);
 
@@ -93,11 +105,12 @@ describe("sendPush", () => {
       expect.objectContaining({ method: "POST" }),
     );
     const body = JSON.parse(mockFetch.mock.calls[0][1].body);
-    expect(body.silent).toBe(true);
+    expect(body.sendKey).toBe("sk123");
+    expect(body.token).toBe("tok");
   });
 
   it("includes text in rich mode", async () => {
-    registerToken({ deviceId: "dev-1", pushToken: "tok", platform: "ios", registeredAt: "" });
+    registerToken({ deviceId: "dev-1", pushToken: "tok", platform: "ios", sendKey: "sk123", registeredAt: "" });
     const mockFetch = vi.fn().mockResolvedValue({ ok: true, text: () => "" });
     vi.stubGlobal("fetch", mockFetch);
 
@@ -108,7 +121,6 @@ describe("sendPush", () => {
     );
 
     const body = JSON.parse(mockFetch.mock.calls[0][1].body);
-    expect(body.silent).toBe(false);
     expect(body.title).toBe("Hello");
     expect(body.body).toBe("World");
   });
@@ -132,33 +144,67 @@ describe("push RPC", () => {
     };
   }
 
-  it("registers push token via RPC", () => {
+  it("registers push token via RPC (calls relay for sendKey)", async () => {
+    const mockFetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ ok: true, sendKey: "derived-key" }),
+    });
+    vi.stubGlobal("fetch", mockFetch);
+
     const { api, methods } = createMockApi();
-    registerPush(api, {});
+    registerPush(api, { push: { relayUrl: "https://test.relay" } });
     const respond = vi.fn();
-    methods["aight.push.register"]({
+    await methods["aight.push.register"]({
       params: { deviceId: "dev-1", pushToken: "tok", platform: "ios" },
       respond,
     });
     expect(respond).toHaveBeenCalledWith(true, expect.objectContaining({ ok: true }));
+    expect(mockFetch).toHaveBeenCalledWith(
+      "https://test.relay/register",
+      expect.objectContaining({ method: "POST" }),
+    );
+    // Verify sendKey was stored
+    const token = loadTokens().find((t) => t.deviceId === "dev-1");
+    expect(token).toBeTruthy();
+    expect(token!.sendKey).toBe("derived-key");
   });
 
-  it("rejects invalid register params", () => {
+  it("rejects invalid register params", async () => {
     const { api, methods } = createMockApi();
     registerPush(api, {});
     const respond = vi.fn();
-    methods["aight.push.register"]({ params: { deviceId: "dev-1" }, respond });
+    await methods["aight.push.register"]({ params: { deviceId: "dev-1" }, respond });
     expect(respond).toHaveBeenCalledWith(
       false,
       expect.objectContaining({ error: expect.any(String) }),
     );
   });
 
+  it("handles relay registration failure", async () => {
+    const mockFetch = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 500,
+      text: () => Promise.resolve("Internal Server Error"),
+    });
+    vi.stubGlobal("fetch", mockFetch);
+
+    const { api, methods } = createMockApi();
+    registerPush(api, { push: { relayUrl: "https://test.relay" } });
+    const respond = vi.fn();
+    await methods["aight.push.register"]({
+      params: { deviceId: "dev-1", pushToken: "tok", platform: "ios" },
+      respond,
+    });
+    expect(respond).toHaveBeenCalledWith(
+      false,
+      expect.objectContaining({ error: expect.stringContaining("500") }),
+    );
+  });
+
   it("unregisters device", () => {
     const { api, methods } = createMockApi();
     registerPush(api, {});
-    // First register
-    registerToken({ deviceId: "dev-1", pushToken: "tok", platform: "ios", registeredAt: "" });
+    registerToken({ deviceId: "dev-1", pushToken: "tok", platform: "ios", sendKey: "k", registeredAt: "" });
     const respond = vi.fn();
     methods["aight.push.unregister"]({ params: { deviceId: "dev-1" }, respond });
     expect(respond).toHaveBeenCalledWith(true, { ok: true, deviceId: "dev-1" });
