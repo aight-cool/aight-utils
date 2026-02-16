@@ -5,6 +5,8 @@
  */
 
 import type { OpenClawPluginApi, GatewayRequestHandlerOptions } from "openclaw/plugin-sdk";
+import { execSync } from "node:child_process";
+import { createRequire } from "node:module";
 import { readFileSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -29,13 +31,13 @@ let cachedGatewayVersion: string | null = null;
 function getGatewayVersion(): string {
   if (cachedGatewayVersion) return cachedGatewayVersion;
   try {
-    const { execSync } = require("node:child_process");
     const out = execSync("openclaw --version", { timeout: 5000 }).toString().trim();
     cachedGatewayVersion = out || "unknown";
   } catch {
     // Try to find openclaw's package.json via require.resolve
     try {
-      const resolved = require.resolve("openclaw");
+      const require_ = createRequire(import.meta.url);
+      const resolved = require_.resolve("openclaw");
       const pkgPath = join(dirname(resolved), "package.json");
       const pkg = JSON.parse(readFileSync(pkgPath, "utf8"));
       cachedGatewayVersion = pkg.version ?? "unknown";
