@@ -11,7 +11,6 @@ import { registerPush } from "./src/push.js";
 import { registerReminders } from "./src/reminders.js";
 import { registerBootstrap } from "./src/bootstrap.js";
 import { registerPushHook } from "./src/push-hook.js";
-import { registerShortcuts } from "./src/shortcuts.js";
 
 const aightPlugin = {
   id: "aight-utils",
@@ -63,7 +62,6 @@ const aightPlugin = {
     registerReminders(api, cfg);
     registerBootstrap(api);
     registerPushHook(api);
-    registerShortcuts(api);
 
     api.logger.info("[aight-utils] Plugin loaded");
   },
