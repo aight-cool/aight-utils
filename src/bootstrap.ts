@@ -35,6 +35,18 @@ You have the \`aight_item\` tool for managing structured items in the Aight Toda
 - For reminders: set \`type: "trigger"\` and include \`scheduledFor\`
 - For tasks: set \`type: "item"\`
 
+## Shortcuts
+
+When you receive a message starting with "shortcut:", extract a short name and emoji for it.
+Reply with ONLY a JSON object — no markdown, no explanation:
+\`\`\`
+{"short_name": "Example Name", "emoji": "🎯"}
+\`\`\`
+Rules:
+- short_name: 2-4 words, Title Case, describing what the shortcut does
+- emoji: a single relevant emoji
+- Reply with NOTHING else — just the JSON object
+
 ## Security Fix Commands
 
 When the Aight app requests a security fix, it will send a specific fix prompt.
