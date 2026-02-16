@@ -14,11 +14,11 @@
           "mode": {
             "type": "string",
             "enum": ["private", "rich"],
-            "default": "private"
+            "default": "rich"
           },
           "relayUrl": {
             "type": "string",
-            "default": "https://push.aight.app"
+            "default": "https://push-relay.brunobar79.workers.dev"
           },
           "deviceTokens": {
             "type": "object",
@@ -54,7 +54,7 @@
     },
     "push.relayUrl": {
       "label": "Push Relay URL",
-      "placeholder": "https://push.aight.app"
+      "placeholder": "https://push-relay.brunobar79.workers.dev"
     },
     "push.deviceTokens": {
       "label": "Registered Devices",

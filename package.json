@@ -3,6 +3,14 @@
   "version": "0.1.0",
   "description": "OpenClaw gateway plugin — push notifications, Today items, config RPC, and agent bootstrap for the Aight app",
   "type": "module",
+  "files": [
+    "index.ts",
+    "src/",
+    "hooks/",
+    "openclaw.plugin.json",
+    "README.md",
+    "LICENSE"
+  ],
   "license": "MIT",
   "repository": {
     "type": "git",
