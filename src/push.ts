@@ -40,7 +40,7 @@ export function loadTokens(): DeviceToken[] {
 }
 
 export function saveTokens(tokens: DeviceToken[]): void {
-  fs.mkdirSync(TOKEN_DIR, { recursive: true });
+  fs.mkdirSync(TOKEN_DIR, { recursive: true, mode: 0o700 });
   fs.writeFileSync(TOKEN_FILE, JSON.stringify(tokens, null, 2), { encoding: "utf-8", mode: 0o600 });
 }
 
