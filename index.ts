@@ -61,7 +61,7 @@ const aightPlugin = {
     registerPush(api, cfg);
     registerReminders(api, cfg);
     registerBootstrap(api);
-    registerPushHook(api, cfg);
+    registerPushHook(api);
 
     api.logger.info("[aight-utils] Plugin loaded");
   },

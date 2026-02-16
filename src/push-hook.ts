@@ -1,53 +1,69 @@
 /**
- * Push notification hook — fires push on agent_end when no app client is connected.
+ * Push notification hook — sends push on agent_end.
  */
 
 import type { OpenClawPluginApi } from "openclaw/plugin-sdk";
-import type { AightConfig } from "./config.js";
+import { getPluginConfig } from "./config.js";
 import { sendPush, loadTokens } from "./push.js";
 
-export function registerPushHook(api: OpenClawPluginApi, config: AightConfig) {
-  api.on("agent_end", async (event, ctx) => {
-    const tokens = loadTokens();
-    if (tokens.length === 0) return;
+export function registerPushHook(api: OpenClawPluginApi) {
+  try {
+    api.on("agent_end", async (event, ctx) => {
+      const tokens = loadTokens();
+      if (tokens.length === 0) return;
 
-    // Extract last assistant message from the agent turn
-    const lastMessage = event.messages
-      ?.slice()
-      .reverse()
-      .find(
-        (m: any) => m.role === "assistant" && typeof m.content === "string" && m.content.trim(),
-      ) as { content: string } | undefined;
+      const msgs = event.messages ?? [];
 
-    if (!lastMessage) return;
-
-    const agentId = ctx.agentId ?? "agent";
-    const preview = lastMessage.content.slice(0, 200);
-
-    // Send push to all registered devices
-    for (const device of tokens) {
-      if (!device.sendKey) continue;
-
-      try {
-        await sendPush(
-          device.deviceId,
-          {
-            title: agentId,
-            body: preview,
-            data: {
-              sessionKey: ctx.sessionKey,
-              agentId,
-            },
-          },
-          config,
-        );
-      } catch (err) {
-        api.logger.warn(
-          `[aight-utils] Push to ${device.deviceId} failed: ${err instanceof Error ? err.message : String(err)}`,
-        );
+      // Extract last assistant message - try string and array content formats
+      let preview = "";
+      for (let i = msgs.length - 1; i >= 0; i--) {
+        const m = msgs[i] as any;
+        if (m.role === "assistant") {
+          if (typeof m.content === "string" && m.content.trim()) {
+            preview = m.content.slice(0, 200);
+            break;
+          }
+          if (Array.isArray(m.content)) {
+            const textBlock = m.content.find(
+              (b: any) => b.type === "text" && typeof b.text === "string",
+            );
+            if (textBlock) {
+              preview = textBlock.text.slice(0, 200);
+              break;
+            }
+          }
+        }
       }
-    }
-  });
 
-  api.logger.info("[aight-utils] Push hook registered (agent_end)");
+      if (!preview) return;
+
+      const agentId = ctx.agentId ?? "agent";
+      const freshConfig = getPluginConfig(api);
+
+      for (const device of tokens) {
+        if (!device.sendKey) continue;
+        try {
+          await sendPush(
+            device.deviceId,
+            {
+              title: agentId,
+              body: preview,
+              data: { sessionKey: ctx.sessionKey, agentId },
+            },
+            freshConfig,
+          );
+        } catch (err) {
+          api.logger.warn(
+            `[aight-utils] Push failed: ${err instanceof Error ? err.message : String(err)}`,
+          );
+        }
+      }
+    });
+
+    api.logger.info("[aight-utils] Push hook registered (agent_end)");
+  } catch (err) {
+    api.logger.error(
+      `[aight-utils] Failed to register push hook: ${err instanceof Error ? err.message : String(err)}`,
+    );
+  }
 }
