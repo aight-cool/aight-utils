@@ -37,8 +37,13 @@ export function registerPushHook(api: OpenClawPluginApi) {
 
       if (!preview) return;
 
-      const agentId = ctx.agentId ?? "agent";
       const freshConfig = getPluginConfig(api);
+
+      // Resolve display name from gateway config agent list
+      const agentId = ctx.agentId ?? "agent";
+      const agents = (api.config as any)?.agents?.list ?? [];
+      const agent = agents.find((a: any) => a.id === agentId);
+      const displayName = agent?.name ?? agent?.identity?.name ?? agentId;
 
       for (const device of tokens) {
         if (!device.sendKey) continue;
@@ -46,7 +51,7 @@ export function registerPushHook(api: OpenClawPluginApi) {
           await sendPush(
             device.deviceId,
             {
-              title: agentId,
+              title: displayName,
               body: preview,
               data: { sessionKey: ctx.sessionKey, agentId },
             },
