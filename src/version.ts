@@ -30,7 +30,7 @@ async function getLatestVersion(): Promise<string> {
     return cachedLatest.version;
   }
   try {
-    const res = await fetch("https://registry.npmjs.org/@aight/utils/latest", {
+    const res = await fetch("https://registry.npmjs.org/@aight-cool/aight-utils/latest", {
       headers: { accept: "application/json" },
       signal: AbortSignal.timeout(5000),
     });

@@ -1,4 +1,4 @@
-# @aight/utils
+# @aight-cool/aight-utils
 
 Open-source [OpenClaw](https://openclaw.ai) gateway plugin for the [Aight](https://aight.app) app.
 
@@ -11,7 +11,7 @@ This is the code that runs on **your** gateway when you use Aight. Every line is
 │  Aight App  │◄──WS───►│       Your OpenClaw Gateway       │
 │  (iOS/RN)   │         │                                    │
 └──────┬──────┘         │  ┌──────────────────────────────┐  │
-       │                │  │       @aight/utils plugin     │  │
+       │                │  │       @aight-cool/aight-utils plugin     │  │
        │                │  │                                │  │
        │                │  │  ┌─────────┐  ┌────────────┐  │  │
        │                │  │  │ Config  │  │   Items    │  │  │
@@ -57,7 +57,7 @@ Aight is a mobile app for OpenClaw. This plugin runs on the gateway side and han
 ## Install
 
 ```bash
-openclaw plugins install @aight/utils
+openclaw plugins install @aight-cool/aight-utils
 ```
 
 Or from the Aight app: tap **Enable Notifications** during onboarding.
