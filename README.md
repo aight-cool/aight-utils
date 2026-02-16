@@ -4,14 +4,55 @@ Open-source [OpenClaw](https://openclaw.ai) gateway plugin for the [Aight](https
 
 This is the code that runs on **your** gateway when you use Aight. Every line is auditable.
 
+## Architecture
+
+```
+┌─────────────┐         ┌──────────────────────────────────┐
+│  Aight App  │◄──WS───►│       Your OpenClaw Gateway       │
+│  (iOS/RN)   │         │                                    │
+└──────┬──────┘         │  ┌──────────────────────────────┐  │
+       │                │  │       @aight/utils plugin     │  │
+       │                │  │                                │  │
+       │                │  │  ┌─────────┐  ┌────────────┐  │  │
+       │                │  │  │ Config  │  │   Items    │  │  │
+       │                │  │  │  RPC    │  │   Store    │  │  │
+       │                │  │  └─────────┘  └────────────┘  │  │
+       │                │  │  ┌─────────┐  ┌────────────┐  │  │
+       │                │  │  │  Push   │  │  Health    │  │  │
+       │                │  │  │ Manager │  │   RPC     │  │  │
+       │                │  │  └────┬────┘  └────────────┘  │  │
+       │                │  │  ┌────┴────┐  ┌────────────┐  │  │
+       │                │  │  │Reminder │  │  Bootstrap │  │  │
+       │                │  │  │ Service │  │   Hook     │  │  │
+       │                │  │  └─────────┘  └────────────┘  │  │
+       │                │  └──────────────────────────────┘  │
+       │                └──────────────────┬─────────────────┘
+       │                                   │
+       │                                   │ HTTP POST
+       │                                   ▼
+       │                ┌──────────────────────────────────┐
+       │                │    push-relay (CF Worker)         │
+       │                │    push-relay.brunobar79.workers.dev │
+       │                │    (open source, stateless)       │
+       └────────────────┤                                    │
+          APNs / FCM    │  ┌────────────┐  ┌─────────────┐  │
+              ◄─────────│  │ APNs relay │  │  FCM relay  │  │
+                        │  └────────────┘  └─────────────┘  │
+                        └──────────────────────────────────┘
+```
+
 ## What it does
 
 Aight is a mobile app for OpenClaw. This plugin runs on the gateway side and handles:
 
-- **Push notifications** — wake your phone when the agent has something to say
-- **Today items** — tasks, reminders, events stored properly (not in chat messages)
-- **Config** — instant settings changes without burning LLM tokens
-- **Agent context** — tells agents about Aight's tools at bootstrap time
+| Module | What | Cost |
+|--------|------|------|
+| **Config RPC** | Instant settings changes | Free (no LLM) |
+| **Items Store** | Tasks, reminders, events — proper data store | Free (no LLM) |
+| **Push Notifications** | Wake your phone when agents respond | Free (no LLM) |
+| **System Health** | Memory, CPU, disk stats | Free (no LLM) |
+| **Reminders Service** | Background scheduler for triggers | Free (no LLM) |
+| **Agent Bootstrap** | Injects tool context at agent start | Free (no LLM) |
 
 ## Install
 
@@ -31,9 +72,8 @@ Or from the Aight app: tap **Enable Notifications** during onboarding.
         enabled: true,
         config: {
           push: {
-            mode: "private", // "private" (silent) or "rich" (with preview)
-            relayUrl: "https://push.aight.app",
-            relaySecret: "your-shared-secret",
+            mode: "rich",       // "private" (silent) or "rich" (with preview)
+            relayUrl: "https://push-relay.brunobar79.workers.dev",
           },
           today: {
             enabled: true,
@@ -45,72 +85,126 @@ Or from the Aight app: tap **Enable Notifications** during onboarding.
 }
 ```
 
-## Modules
+## RPC Methods
 
-### 1. Config RPC
+### Config
 
 Direct gateway RPC — no LLM calls, instant response, zero cost.
 
-| Method               | Description                |
-| -------------------- | -------------------------- |
-| `aight.config.get`   | Read current plugin config |
-| `aight.config.patch` | Update plugin config       |
-| `aight.status`       | Plugin health check        |
+| Method | Description |
+|--------|-------------|
+| `aight.config.get` | Read current plugin config |
+| `aight.config.patch` | Update plugin config (persists to `openclaw.json`) |
+| `aight.status` | Plugin health check |
 
-### 2. Items Store
+### Items Store
 
 A proper data store for Today view items. Replaces storing JSON in chat messages.
 
-| Method               | Description                                                 |
-| -------------------- | ----------------------------------------------------------- |
-| `aight.items.list`   | List items (filterable by type, labels, status, date range) |
-| `aight.items.upsert` | Create or update an item (deduplicated by ID)               |
-| `aight.items.delete` | Soft-delete an item                                         |
+| Method | Description |
+|--------|-------------|
+| `aight.items.list` | List items (filterable by type, labels, status, date range) |
+| `aight.items.upsert` | Create or update an item (deduplicated by ID) |
+| `aight.items.delete` | Soft-delete an item |
 
-**Agent tool:** `aight_item` — only invoked when natural language parsing is needed (e.g., "remind me tomorrow at 3pm"). Direct CRUD from the app uses the RPC methods above (free, instant).
+**Agent tool:** `aight_item` — only invoked when natural language parsing is needed (e.g., "remind me tomorrow at 3pm"). Direct CRUD from the app uses the RPC methods above.
 
-#### Item types
+### Push Notifications
 
-| Type      | Use for                        | Statuses                               |
-| --------- | ------------------------------ | -------------------------------------- |
-| `trigger` | Reminders, events, deadlines   | active → fired → completed / cancelled |
-| `item`    | Tasks, PRs, issues, projects   | todo → in-progress → done / blocked    |
-| `process` | Subagent runs, builds, deploys | pending → running → done / failed      |
+| Method | Description |
+|--------|-------------|
+| `aight.push.register` | Register device token + obtain sendKey |
+| `aight.push.unregister` | Remove a device token |
+| `aight.push.test` | Send a test push (always rich, regardless of mode setting) |
 
-### 3. Push Notifications
+### System Health
 
-| Method                  | Description                  |
-| ----------------------- | ---------------------------- |
-| `aight.push.register`   | Register a device push token |
-| `aight.push.unregister` | Remove a device token        |
+| Method | Description |
+|--------|-------------|
+| `aight.health` | Memory, CPU, disk stats — runs shell commands directly, no LLM |
 
-**Notification modes** (user's choice in Aight settings):
+## Push Notification Flow
 
-- 🔒 **Private** (default) — silent push, content-free. App wakes and fetches from gateway. The [push relay](https://github.com/aight-app/push-relay) sees nothing but "wake device X."
-- 🔔 **Rich** (opt-in) — visible push with message preview. Text passes through the relay in-transit only (HTTPS), never stored.
+```
+Agent completes turn
+        │
+        ▼
+  ┌─────────────┐     ┌──────────────┐     ┌─────────┐     ┌──────────┐
+  │ agent_end   │────►│ Push Manager │────►│  Relay  │────►│  APNs /  │
+  │   hook      │     │ (plugin)     │     │  (CF)   │     │   FCM    │
+  └─────────────┘     └──────────────┘     └─────────┘     └──────────┘
+                             │                                    │
+                             │ Filters:                           ▼
+                             │ • NO_REPLY                   ┌──────────┐
+                             │ • REPLY_SKIP                 │  Phone   │
+                             │ • ANNOUNCE_SKIP              │  (Aight) │
+                             │ • HEARTBEAT_OK               └──────────┘
+                             │ • Empty messages
+                             │
+                        Suppressed (no push sent)
+```
 
-### 4. Reminders Service
+### Notification modes
 
-Background service that checks for scheduled trigger items every 30 seconds. When a trigger fires:
+- 🔔 **Rich** (default) — visible push with sender name and message preview
+- 🔒 **Private** — silent push, content-free. App wakes and fetches from gateway. Relay sees nothing but "wake device X."
+
+### Foreground suppression
+
+When the app is in the foreground viewing the same agent's chat, push notifications are automatically suppressed — no duplicate alerts.
+
+### Per-device auth (HMAC sendKey)
+
+```
+Device registers push token
+        │
+        ▼
+  ┌─────────────┐     ┌──────────────┐
+  │   Plugin    │────►│    Relay     │  POST /register
+  │  (gateway)  │     │    (CF)      │  { token }
+  └─────────────┘     └──────┬───────┘
+                             │
+                    sendKey = HMAC-SHA256(
+                      masterSecret,
+                      "v1:" + deviceToken
+                    )
+                             │
+                             ▼
+                    Returned to plugin,
+                    stored in devices.json
+```
+
+No shared secret in plugin code. Each device gets a unique sendKey derived from the relay's master secret. Zero state on the relay — sendKey is re-derivable.
+
+## Item Types
+
+| Type | Use for | Statuses |
+|------|---------|----------|
+| `trigger` | Reminders, events, deadlines | active → fired → completed / cancelled |
+| `item` | Tasks, PRs, issues, projects | active → done / cancelled |
+| `process` | Subagent runs, builds, deploys | active → done / cancelled |
+
+### Reminders Service
+
+Background service checks for scheduled trigger items every 30 seconds. When a trigger fires:
 
 1. Updates item status to `"fired"`
 2. Sends push notification to all registered devices
 
-### 5. Agent Bootstrap
+## Agent Bootstrap
 
 Injects `AIGHT.md` into agent context via the `agent:bootstrap` hook — no workspace file mutations. Automatically removed when the plugin is disabled.
 
-Tells agents about:
+Tells agents about the `aight_item` tool and structured item format.
 
-- The `aight_item` tool and how to use it
-- Structured item format reference
+## Data Storage
 
-## Data storage
+| File | Contents |
+|------|----------|
+| `~/.openclaw/aight/items.json` | Today view items |
+| `~/.openclaw/aight/devices.json` | Registered push device tokens + sendKeys |
 
-| File                             | Contents                      |
-| -------------------------------- | ----------------------------- |
-| `~/.openclaw/aight/items.json`   | Today view items              |
-| `~/.openclaw/aight/devices.json` | Registered push device tokens |
+Directory permissions: `0o700` (owner-only access).
 
 ## Why open source?
 
@@ -127,14 +221,14 @@ The closed-source parts of Aight are purely UI — they consume this plugin's RP
 
 ```bash
 npm install
-npx vitest run     # 34 tests
+npx vitest run
 ```
 
 ## Related
 
-- [push-relay](https://github.com/aight-app/push-relay) — the open-source push notification relay
-- [expo-openclaw-chat](https://github.com/aight-app/expo-openclaw-chat) — the open-source gateway client library
-- [OpenClaw Plugin Docs](https://docs.openclaw.ai/tools/plugin)
+- [push-relay](https://github.com/itsclawdbro/aight-push-relay) — open-source push notification relay (Cloudflare Workers)
+- [expo-openclaw-chat](https://github.com/itsclawdbro/expo-openclaw-chat) — open-source gateway client library
+- [OpenClaw](https://openclaw.ai) — the AI gateway platform
 
 ## License
 
