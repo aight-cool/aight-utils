@@ -87,6 +87,7 @@ async function obtainSendKey(relayUrl: string, pushToken: string): Promise<strin
 
 export interface PushPayload {
   title?: string;
+  subtitle?: string;
   body?: string;
   data?: Record<string, unknown>;
   silent?: boolean;
@@ -118,6 +119,7 @@ export async function sendPush(
 
   if (mode === "rich" && !payload.silent) {
     pushBody.title = payload.title;
+    if (payload.subtitle) pushBody.subtitle = payload.subtitle;
     pushBody.body = payload.body;
   }
 

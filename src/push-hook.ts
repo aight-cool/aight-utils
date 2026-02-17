@@ -62,22 +62,21 @@ export function registerPushHook(api: OpenClawPluginApi) {
       const agent = agents.find((a: any) => a.id === agentId);
       const displayName = agent?.name ?? agent?.identity?.name ?? agentId;
 
-      // Resolve group chat name for push title
+      // Resolve group chat name for push subtitle (WhatsApp-style layout)
       let pushTitle = displayName;
+      let pushSubtitle: string | undefined;
       const sessionKey = ctx.sessionKey ?? "";
       if (sessionKey.includes(":group-chat:")) {
         const groupId = sessionKey.split(":group-chat:")[1];
         if (groupId) {
-          // Look up friendly name from plugin data store
           const groupName = loadGroupName(api, groupId);
-          api.logger.info(
-            `[aight-utils] Group push title: groupId=${groupId} groupName=${groupName ?? "(not found)"} pushTitle=${groupName ? `${displayName} — ${groupName}` : displayName}`,
-          );
-          pushTitle = groupName
-            ? `${displayName} — ${groupName}`
-            : displayName;
+          if (groupName) {
+            pushSubtitle = groupName;
+          }
         }
       }
+
+      const cleanBody = preview.trim().replace(/\n+/g, " ").trim();
 
       for (const device of tokens) {
         if (!device.sendKey) continue;
@@ -86,7 +85,8 @@ export function registerPushHook(api: OpenClawPluginApi) {
             device.deviceId,
             {
               title: pushTitle.trim(),
-              body: preview.trim().replace(/\n+/g, " ").trim(),
+              subtitle: pushSubtitle,
+              body: cleanBody,
               data: { sessionKey: ctx.sessionKey, agentId },
             },
             freshConfig,
