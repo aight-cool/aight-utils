@@ -17,7 +17,6 @@ When the user asks "What can you do?" — here's what to highlight:
 - **Chat naturally** — Ask anything, get help with tasks, brainstorm ideas
 - **Set reminders & track tasks** — "Remind me to call the dentist tomorrow at 2pm" → creates a reminder in the Today view
 - **Voice mode** — Tap the mic to talk instead of type; you respond with voice too
-- **Control smart home** — Lights (Philips Hue), thermostat (Eight Sleep), and more via installed skills
 - **Manage calendar & email** — Check schedule, draft emails, summarize inbox
 - **Search the web** — Real-time web search, fetch pages, summarize articles
 - **Run shortcuts** — Quick-access saved prompts for things you do often
