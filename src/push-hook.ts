@@ -5,6 +5,7 @@
 import type { OpenClawPluginApi } from "openclaw/plugin-sdk";
 import { getPluginConfig } from "./config.js";
 import { sendPush, loadTokens } from "./push.js";
+import { loadGroupName } from "./groups.js";
 
 export function registerPushHook(api: OpenClawPluginApi) {
   try {
@@ -61,13 +62,27 @@ export function registerPushHook(api: OpenClawPluginApi) {
       const agent = agents.find((a: any) => a.id === agentId);
       const displayName = agent?.name ?? agent?.identity?.name ?? agentId;
 
+      // Resolve group chat name for push title
+      let pushTitle = displayName;
+      const sessionKey = ctx.sessionKey ?? "";
+      if (sessionKey.includes(":group-chat:")) {
+        const groupId = sessionKey.split(":group-chat:")[1];
+        if (groupId) {
+          // Look up friendly name from plugin data store
+          const groupName = loadGroupName(api, groupId);
+          pushTitle = groupName
+            ? `${displayName} — ${groupName}`
+            : displayName;
+        }
+      }
+
       for (const device of tokens) {
         if (!device.sendKey) continue;
         try {
           await sendPush(
             device.deviceId,
             {
-              title: displayName,
+              title: pushTitle,
               body: preview,
               data: { sessionKey: ctx.sessionKey, agentId },
             },
