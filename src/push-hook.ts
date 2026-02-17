@@ -63,7 +63,7 @@ export function registerPushHook(api: OpenClawPluginApi) {
       const displayName = agent?.name ?? agent?.identity?.name ?? agentId;
 
       // Resolve group chat name for push subtitle (WhatsApp-style layout)
-      let pushTitle = displayName;
+      const pushTitle = displayName;
       let pushSubtitle: string | undefined;
       const sessionKey = ctx.sessionKey ?? "";
       if (sessionKey.includes(":group-chat:")) {

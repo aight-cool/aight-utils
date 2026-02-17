@@ -1,8 +1,8 @@
 # @aight-cool/aight-utils
 
-Open-source [OpenClaw](https://openclaw.ai) gateway plugin for the [Aight](https://aight.app) app.
+Open-source [OpenClaw](https://openclaw.ai) gateway plugin for the [Aight](https://aight.cool) app.
 
-This is the code that runs on **your** gateway when you use Aight. Every line is auditable.
+This is the code that runs on **your** gateway when you use Aight.
 
 ## Architecture
 
@@ -147,7 +147,6 @@ Agent completes turn
 ### Notification modes
 
 - 🔔 **Rich** (default) — visible push with sender name and message preview
-- 🔒 **Private** — silent push, content-free. App wakes and fetches from gateway. Relay sees nothing but "wake device X."
 
 ### Foreground suppression
 
@@ -221,8 +220,6 @@ Aight itself is not open source, but the code that runs on **your gateway** is. 
 - See exactly what gets injected into agent prompts
 - Audit what data flows through the push relay
 - Fork and customize if you want
-
-The closed-source parts of Aight are purely UI — they consume this plugin's RPC API.
 
 ## Development
 
