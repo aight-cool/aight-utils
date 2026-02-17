@@ -85,8 +85,8 @@ export function registerPushHook(api: OpenClawPluginApi) {
           await sendPush(
             device.deviceId,
             {
-              title: pushTitle,
-              body: preview,
+              title: pushTitle.trim(),
+              body: preview.trim(),
               data: { sessionKey: ctx.sessionKey, agentId },
             },
             freshConfig,
