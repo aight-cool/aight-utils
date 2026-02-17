@@ -2,7 +2,7 @@
   "id": "aight-utils",
   "name": "Aight App Utils",
   "description": "Aight App: Push notifications, Today items, config RPC, and agent bootstrap",
-  "version": "0.1.9",
+  "version": "0.1.10",
   "configSchema": {
     "type": "object",
     "additionalProperties": false,
