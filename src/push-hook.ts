@@ -70,6 +70,9 @@ export function registerPushHook(api: OpenClawPluginApi) {
         if (groupId) {
           // Look up friendly name from plugin data store
           const groupName = loadGroupName(api, groupId);
+          api.logger.info(
+            `[aight-utils] Group push title: groupId=${groupId} groupName=${groupName ?? "(not found)"} pushTitle=${groupName ? `${displayName} — ${groupName}` : displayName}`,
+          );
           pushTitle = groupName
             ? `${displayName} — ${groupName}`
             : displayName;
