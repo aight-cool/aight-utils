@@ -13,10 +13,7 @@
         "properties": {
           "mode": {
             "type": "string",
-            "enum": [
-              "private",
-              "rich"
-            ],
+            "enum": ["private", "rich"],
             "default": "rich"
           },
           "relayUrl": {
@@ -34,19 +31,13 @@
                 },
                 "platform": {
                   "type": "string",
-                  "enum": [
-                    "ios",
-                    "android"
-                  ]
+                  "enum": ["ios", "android"]
                 },
                 "registeredAt": {
                   "type": "string"
                 }
               },
-              "required": [
-                "token",
-                "platform"
-              ]
+              "required": ["token", "platform"]
             }
           }
         }

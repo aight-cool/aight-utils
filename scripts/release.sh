@@ -54,6 +54,7 @@ manifest.version = '$NEW_VERSION';
 fs.writeFileSync(path, JSON.stringify(manifest, null, 2) + '\n');
 "
 
+npx prettier --write package.json openclaw.plugin.json
 git add package.json openclaw.plugin.json
 git commit -m "$NEW_VERSION"
 git tag "v$NEW_VERSION"
