@@ -45,8 +45,8 @@ export function removeGroupName(api: OpenClawPluginApi, groupId: string): void {
 }
 
 export function registerGroupRpc(api: OpenClawPluginApi): void {
-  api.rpc.register("aight.groups.setName", (params, respond) => {
-    const { groupId, name } = params as { groupId?: string; name?: string };
+  api.registerGatewayMethod("aight.groups.setName", ({ params, respond }: any) => {
+    const { groupId, name } = (params ?? {}) as { groupId?: string; name?: string };
     if (!groupId || !name) {
       respond(false, { error: "groupId and name are required" });
       return;
@@ -55,8 +55,8 @@ export function registerGroupRpc(api: OpenClawPluginApi): void {
     respond(true, { ok: true });
   });
 
-  api.rpc.register("aight.groups.removeName", (params, respond) => {
-    const { groupId } = params as { groupId?: string };
+  api.registerGatewayMethod("aight.groups.removeName", ({ params, respond }: any) => {
+    const { groupId } = (params ?? {}) as { groupId?: string };
     if (!groupId) {
       respond(false, { error: "groupId is required" });
       return;
