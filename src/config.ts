@@ -16,6 +16,9 @@ export interface AightConfig {
   };
 }
 
+/** Keys that belong in the plugin config section (everything else routes to root gateway config) */
+const PLUGIN_CONFIG_KEYS = new Set(["push", "today"]);
+
 /** Secret keys that must never be returned to clients via RPC */
 const SECRET_KEYS: string[] = ["relaySecret"];
 
@@ -50,14 +53,25 @@ export function registerConfig(api: OpenClawPluginApi) {
         return;
       }
       try {
-        // Load current config, merge patch into plugin config, write back
+        // Load current config
         const currentConfig = await api.runtime.config.loadConfig();
         const pluginEntry = (currentConfig as any)?.plugins?.entries?.["aight-utils"] ?? {};
         const currentPluginConfig = pluginEntry.config ?? {};
 
-        // Deep merge the patch into plugin config
-        const merged = { ...currentPluginConfig };
+        // Separate plugin-level keys from gateway root-level keys
+        const pluginPatch: Record<string, unknown> = {};
+        const rootPatch: Record<string, unknown> = {};
         for (const [key, value] of Object.entries(params as Record<string, unknown>)) {
+          if (PLUGIN_CONFIG_KEYS.has(key)) {
+            pluginPatch[key] = value;
+          } else {
+            rootPatch[key] = value;
+          }
+        }
+
+        // Deep merge plugin-level keys into plugin config
+        const merged = { ...currentPluginConfig };
+        for (const [key, value] of Object.entries(pluginPatch)) {
           if (
             value &&
             typeof value === "object" &&
@@ -71,8 +85,8 @@ export function registerConfig(api: OpenClawPluginApi) {
           }
         }
 
-        // Write updated config
-        const updatedConfig = {
+        // Build updated config: plugin config + root-level overrides
+        let updatedConfig: Record<string, unknown> = {
           ...(currentConfig as Record<string, unknown>),
           plugins: {
             ...((currentConfig as any)?.plugins ?? {}),
@@ -85,6 +99,21 @@ export function registerConfig(api: OpenClawPluginApi) {
             },
           },
         };
+
+        // Deep merge root-level keys into the gateway config
+        for (const [key, value] of Object.entries(rootPatch)) {
+          if (
+            value &&
+            typeof value === "object" &&
+            !Array.isArray(value) &&
+            updatedConfig[key] &&
+            typeof updatedConfig[key] === "object"
+          ) {
+            updatedConfig[key] = { ...(updatedConfig[key] as Record<string, unknown>), ...value };
+          } else {
+            updatedConfig[key] = value;
+          }
+        }
 
         await api.runtime.config.writeConfigFile(updatedConfig as any);
         respond(true, { ok: true, config: getClientSafeConfig(merged as AightConfig) });
