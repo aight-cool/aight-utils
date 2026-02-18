@@ -16,6 +16,26 @@ export function registerPushHook(api: OpenClawPluginApi) {
       const tokens = loadTokens();
       if (tokens.length === 0) return;
 
+      // Skip hidden/internal sessions — no push notifications for config,
+      // security, voice, sub-agent, or other background sessions.
+      const sk = ctx.sessionKey ?? "";
+      if (
+        sk.endsWith(":aight-config") ||
+        sk.endsWith(":aight-pentest") ||
+        sk.endsWith(":speak") ||
+        sk.endsWith(":structured_content") ||
+        sk.endsWith(":main") ||
+        sk.includes("subagent") ||
+        sk.includes("security-audit") ||
+        sk.includes("_skill-audit-") ||
+        sk.includes("_ensure-skill-defender") ||
+        sk.endsWith("security-fix") ||
+        sk.endsWith("skill-scan")
+      ) {
+        api.logger.info(`[aight-utils] Skipping hidden session push: ${sk}`);
+        return;
+      }
+
       const msgs = event.messages ?? [];
       api.logger.info(
         `[aight-utils] messages count=${msgs.length} roles=${msgs.map((m: any) => m.role).join(",")}`,
@@ -44,6 +64,14 @@ export function registerPushHook(api: OpenClawPluginApi) {
 
       if (!preview) {
         api.logger.info(`[aight-utils] No preview found, skipping push`);
+        return;
+      }
+
+      // Skip hidden/internal sessions (aight-config, structured_content, etc.)
+      const sessionKey_ = ctx.sessionKey ?? "";
+      const HIDDEN_SESSIONS = ["aight-config", "structured_content"];
+      if (HIDDEN_SESSIONS.some((h) => sessionKey_.includes(h))) {
+        api.logger.info(`[aight-utils] Skipping hidden session: ${sessionKey_}`);
         return;
       }
 

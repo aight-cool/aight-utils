@@ -3,8 +3,6 @@
  */
 
 import type { OpenClawPluginApi } from "openclaw/plugin-sdk";
-import * as path from "node:path";
-import { fileURLToPath } from "node:url";
 
 const AIGHT_MD = `# Aight Integration
 
@@ -151,15 +149,16 @@ Rules:
 
 export function registerBootstrap(api: OpenClawPluginApi) {
   try {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const sdk = require("openclaw/plugin-sdk");
-    if (sdk?.registerPluginHooksFromDir) {
-      const pluginDir = path.dirname(fileURLToPath(import.meta.url));
-      const hooksDir = path.join(pluginDir, "..", "hooks");
-      sdk.registerPluginHooksFromDir(api, hooksDir);
-    }
-  } catch {
-    api.logger.info("[aight-utils] Could not register hooks dir, using inline approach");
+    api.logger.info("[aight-utils] Attempting to register bootstrap hook...");
+    api.logger.info(`[aight-utils] api.on type: ${typeof api.on}`);
+    api.on("before_agent_start", (_event: unknown, ctx: { sessionKey?: string }) => {
+      // Inject AIGHT.md context into every agent session
+      api.logger.info(`[aight-utils] Bootstrap: injecting AIGHT.md into session ${ctx?.sessionKey}`);
+      return { prependContext: AIGHT_MD };
+    });
+    api.logger.info("[aight-utils] Bootstrap hook registered (before_agent_start)");
+  } catch (err) {
+    api.logger.error(`[aight-utils] Failed to register bootstrap hook: ${err}`);
   }
 }
 
