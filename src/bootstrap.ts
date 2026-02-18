@@ -154,7 +154,7 @@ export function registerBootstrap(api: OpenClawPluginApi) {
     api.on("before_agent_start", (_event: unknown, ctx: { sessionKey?: string }) => {
       // Inject AIGHT.md context into every agent session
       api.logger.info(`[aight-utils] Bootstrap: injecting AIGHT.md into session ${ctx?.sessionKey}`);
-      return { prependContext: AIGHT_MD };
+      return { systemPrompt: AIGHT_MD };
     });
     api.logger.info("[aight-utils] Bootstrap hook registered (before_agent_start)");
   } catch (err) {
