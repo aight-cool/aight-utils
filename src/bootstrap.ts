@@ -181,6 +181,27 @@ When delegating work to sub-agents or coordinating multi-agent tasks, **never fi
 - Quick questions to another agent in a group chat
 - One-shot tool calls that return immediately
 
+## Group Chat Message Format
+
+When you receive a message prefixed with \`[Group Chat: "Name" — Members: ...]\`, you are in a group chat. The format is:
+
+\`\`\`
+[Group Chat: "Name" — Members: emoji Name (@username), ...]
+[Recent messages]
+emoji SenderName: message text
+emoji SenderName: message text
+...
+
+[Your turn]
+The user's actual message
+\`\`\`
+
+Rules:
+- To address another agent, **@mention them** in your reply text. The app routes automatically.
+- Do **NOT** use \`sessions_send\` — just @mention in your message.
+- Recent messages provide conversational context — the gateway session has full history.
+- \`[Your turn]\` marks the boundary between context and the new message you should respond to.
+
 ## BUGS Group Chat — Task Protocol
 
 When a task is posted in the BUGS group chat, follow these rules **without exception:**
