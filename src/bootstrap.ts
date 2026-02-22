@@ -140,6 +140,75 @@ The personality prompt should capture:
 
 ---
 
+## Task Follow-Up Protocol (Watchdog Pattern)
+
+When delegating work to sub-agents or coordinating multi-agent tasks, **never fire-and-forget.** Use watchdog crons to ensure tasks don't stall silently.
+
+### Rules
+
+1. **Set a watchdog cron when assigning async work.**
+   After spawning a sub-agent or assigning a task to another agent, create a one-shot cron job (**5 minutes out**) to check progress:
+   \`\`\`
+   cron add:
+     schedule: { kind: "at", at: "<ISO 8601, 5 min from now>" }
+     payload: { kind: "systemEvent", text: "Watchdog: check if <task description> completed. Expected: <files/state>. If not done, check agent status, retry, or do it yourself." }
+     sessionTarget: "main"
+   \`\`\`
+
+2. **When the watchdog fires:**
+   - Check if the expected output exists (files, state changes, messages)
+   - If done → great, clean up
+   - If not done → check the agent's session (\`sessions_history\`). Is it alive? Stuck? Dead?
+   - If stuck/dead → **do the work yourself inline.** No more spawning. No more waiting.
+
+3. **Agents must report blockers immediately.**
+   If you hit a wall during a task, say so right away: "I'm stuck on X, need Y." Radio silence for 5+ minutes is unacceptable. Silence = escalation.
+
+4. **Fallback ownership.**
+   If an agent (or you as coordinator) hasn't made progress in 5 minutes, take over or reassign. No task sits in limbo.
+
+5. **Never report failure as a final answer.**
+   "The sub-agent died" is not acceptable. "The sub-agent died so I did it myself" is. You own the outcome, not the sub-agent.
+
+### When to Use Watchdogs
+- Sub-agent spawns (\`sessions_spawn\`)
+- Multi-step group chat tasks (e.g., "build and test this PR")
+- Any async work where you're waiting on another agent
+- Background processes (builds, deploys, long-running scripts)
+
+### When NOT Needed
+- Simple inline tasks you do yourself
+- Quick questions to another agent in a group chat
+- One-shot tool calls that return immediately
+
+## BUGS Group Chat — Task Protocol
+
+When a task is posted in the BUGS group chat, follow these rules **without exception:**
+
+### 1. Claim Immediately
+When you start working on something, say so in the group chat. No silent pickups.
+Example: "Claiming this — looking at the inline code rendering in CodeRenderer.m now."
+
+### 2. Report Completion
+When done, post in the group:
+- **Commit hash** (or what you changed)
+- **What changed** (1-2 sentences)
+- **What's needed next** (e.g. "needs native rebuild", "ready for QA", "blocked on X")
+
+Don't wait to be asked. Don't go silent after finishing.
+
+### 3. Report Blockers Fast (<2 min)
+If you're stuck, say so immediately. Don't spend 10 minutes silently struggling.
+Example: "Blocker: CocoaPods fails with Ruby 4.0 encoding error. Need to downgrade Ruby or find workaround."
+
+### 4. No Limbo
+If you've been working on something for 5+ minutes with no progress, escalate or hand it off. Tasks do not sit in limbo.
+
+### 5. Silence = Escalation
+If an agent goes silent for 5+ minutes during an active task, any other agent (or the coordinator) should take over. Don't wait for permission.
+
+**This protocol exists because agents repeatedly picked up tasks, worked silently, and never reported back — forcing Bruno to chase every time. That stops now.**
+
 ## Shortcuts (Aight App)
 
 When you receive a message starting with "shortcut:", extract a short name and emoji for it.
