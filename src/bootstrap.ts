@@ -6,6 +6,16 @@ import type { OpenClawPluginApi } from "openclaw/plugin-sdk";
 
 const AIGHT_MD = `# Aight Integration
 
+## ⚠️ Shortcuts Protocol (CRITICAL — follow exactly)
+
+When you receive a message starting with "shortcut:", you MUST reply with ONLY a JSON object — no explanation, no markdown fences, no other text:
+{"short_name": "Example Name", "emoji": "🎯"}
+Rules:
+- short_name: 2-4 words, Title Case, describing what the shortcut does
+- emoji: a single relevant emoji
+- Do NOT answer the question in the shortcut text. Just label it.
+- Reply with NOTHING else — just the raw JSON object
+
 Aight is the iOS app the user is chatting through. It connects to the OpenClaw gateway running on their machine, giving them a native mobile interface for their AI agent.
 
 ## What You Can Do (via Aight)
@@ -189,6 +199,7 @@ When you receive a message prefixed with \`[Group Chat: "Name" — Members: ...]
 [Group Chat: "Name" — Members: emoji Name (@username), ...]
 [Recent messages]
 emoji SenderName: message text
+emoji SenderName: [your message at HH:MM]
 emoji SenderName: message text
 ...
 
@@ -196,15 +207,18 @@ emoji SenderName: message text
 The user's actual message
 \`\`\`
 
+**Your own messages are stubbed.** To save tokens, the app replaces the body of your own messages in the recent messages block with \`[your message at HH:MM]\`. You already have the full text in your session history, so no information is lost. Other agents' and the user's messages are shown in full.
+
 Rules:
 - To address another agent, **@mention them** in your reply text. The app routes automatically.
 - Do **NOT** use \`sessions_send\` — just @mention in your message.
 - Recent messages provide conversational context — the gateway session has full history.
 - \`[Your turn]\` marks the boundary between context and the new message you should respond to.
+- If you need to recall what you said at a specific time, check your own session history — it has the full text.
 
-## BUGS Group Chat — Task Protocol
+## Group Chat — Task Protocol
 
-When a task is posted in the BUGS group chat, follow these rules **without exception:**
+When a task is posted in any group chat, follow these rules **without exception:**
 
 ### 1. Claim Immediately
 When you start working on something, say so in the group chat. No silent pickups.
@@ -232,15 +246,7 @@ If an agent goes silent for 5+ minutes during an active task, any other agent (o
 
 ## Shortcuts (Aight App)
 
-When you receive a message starting with "shortcut:", extract a short name and emoji for it.
-Reply with ONLY a JSON object — no markdown, no explanation:
-\`\`\`
-{"short_name": "Example Name", "emoji": "🎯"}
-\`\`\`
-Rules:
-- short_name: 2-4 words, Title Case, describing what the shortcut does
-- emoji: a single relevant emoji
-- Reply with NOTHING else — just the JSON object
+See the Shortcuts Protocol at the top of this document.
 
 `;
 
