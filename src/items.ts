@@ -150,13 +150,37 @@ export const AightItemToolParams = Type.Object({
 
 // ── Registration ──
 
+/** Strip heavy fields for list responses — detail is fetched via aight.items.get */
+function toLightItem(item: Item): Omit<Item, "description" | "metadata" | "url"> {
+  const { description: _d, metadata: _m, url: _u, ...light } = item;
+  return light;
+}
+
 export function registerItems(api: OpenClawPluginApi) {
   api.registerGatewayMethod(
     "aight.items.list",
     ({ params, respond }: GatewayRequestHandlerOptions) => {
       const filters: ListFilters =
         params && typeof params === "object" ? (params as ListFilters) : {};
-      respond(true, { items: listItems(filters) });
+      respond(true, { items: listItems(filters).map(toLightItem) });
+    },
+  );
+
+  api.registerGatewayMethod(
+    "aight.items.get",
+    ({ params, respond }: GatewayRequestHandlerOptions) => {
+      const id = typeof params?.id === "string" ? params.id : "";
+      if (!id) {
+        respond(false, { error: "id required" });
+        return;
+      }
+      const all = loadItems();
+      const item = all.find((i) => i.id === id);
+      if (!item || item.status === "deleted") {
+        respond(false, { error: "item not found" });
+        return;
+      }
+      respond(true, { item });
     },
   );
 
