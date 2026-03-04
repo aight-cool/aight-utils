@@ -14,6 +14,7 @@ import { registerPushHook } from "./src/push-hook.js";
 import { registerHealth } from "./src/health.js";
 import { registerVersion } from "./src/version.js";
 import { registerGroupRpc } from "./src/groups.js";
+import { registerNotifPrefsRPC } from "./src/notif-prefs.js";
 
 const aightPlugin = {
   id: "aight-utils",
@@ -68,6 +69,7 @@ const aightPlugin = {
     registerHealth(api);
     registerVersion(api);
     registerGroupRpc(api);
+    registerNotifPrefsRPC(api);
 
     api.logger.info("[aight-utils] Plugin loaded");
   },

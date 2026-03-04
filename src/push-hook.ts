@@ -6,6 +6,7 @@ import type { OpenClawPluginApi } from "openclaw/plugin-sdk";
 import { getPluginConfig } from "./config.js";
 import { sendPush, loadTokens } from "./push.js";
 import { loadGroupName } from "./groups.js";
+import { shouldSendPush } from "./notif-prefs.js";
 
 export function registerPushHook(api: OpenClawPluginApi) {
   try {
@@ -105,6 +106,14 @@ export function registerPushHook(api: OpenClawPluginApi) {
       }
 
       const cleanBody = preview.trim().replace(/\n+/g, " ").trim();
+
+      // ── Notification preference gate ──
+      // Check if this category is muted — if so, don't send the push at all.
+      const sk_ = ctx.sessionKey ?? "";
+      if (!shouldSendPush(sk_)) {
+        api.logger.info(`[aight-utils] Push suppressed by notification prefs: ${sk_}`);
+        return;
+      }
 
       for (const device of tokens) {
         if (!device.sendKey) continue;
