@@ -118,7 +118,7 @@ export function registerPushHook(api: OpenClawPluginApi) {
       for (const device of tokens) {
         if (!device.sendKey) continue;
         try {
-          await sendPush(
+          const pushResult = await sendPush(
             device.deviceId,
             {
               title: pushTitle.trim(),
@@ -127,6 +127,9 @@ export function registerPushHook(api: OpenClawPluginApi) {
               data: { sessionKey: ctx.sessionKey, agentId },
             },
             freshConfig,
+          );
+          api.logger.info(
+            `[aight-utils] Push sent: session=${ctx.sessionKey} device=${device.deviceId} status=${pushResult?.ok ?? 'unknown'}`,
           );
         } catch (err) {
           api.logger.warn(
