@@ -4,7 +4,7 @@
 
 import type { OpenClawPluginApi } from "openclaw/plugin-sdk";
 import { getPluginConfig } from "./config.js";
-import { sendPush, loadTokens } from "./push.js";
+import { sendPush, loadTokens, unregisterToken } from "./push.js";
 import { loadGroupName } from "./groups.js";
 import { shouldSendPush } from "./notif-prefs.js";
 
@@ -129,8 +129,24 @@ export function registerPushHook(api: OpenClawPluginApi) {
             freshConfig,
           );
           api.logger.info(
-            `[aight-utils] Push sent: session=${ctx.sessionKey} device=${device.deviceId} status=${pushResult?.ok ?? 'unknown'}`,
+            `[aight-utils] Push sent: session=${ctx.sessionKey} device=${device.deviceId} ok=${pushResult.ok}${pushResult.error ? ` error=${pushResult.error}` : ""}`,
           );
+
+          // Auto-prune stale tokens — if the relay rejects the token, remove it
+          if (!pushResult.ok && pushResult.error) {
+            const err = pushResult.error.toLowerCase();
+            if (
+              err.includes("baddevicetoken") ||
+              err.includes("unregistered") ||
+              err.includes("devicetokennotfortopic") ||
+              err.includes("expired")
+            ) {
+              api.logger.info(
+                `[aight-utils] Pruning stale device token: ${device.deviceId}`,
+              );
+              unregisterToken(device.deviceId);
+            }
+          }
         } catch (err) {
           api.logger.warn(
             `[aight-utils] Push failed: ${err instanceof Error ? err.message : String(err)}`,
