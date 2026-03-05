@@ -56,9 +56,7 @@ function saveNotifPrefs(prefs: NotifPrefs): void {
 
 // ── Classification (matches app-side logic) ──
 
-export function classifySessionKey(
-  sessionKey: string,
-): "agentReplies" | "groupChat" | "cron" {
+export function classifySessionKey(sessionKey: string): "agentReplies" | "groupChat" | "cron" {
   if (sessionKey.includes(":cron:")) return "cron";
   if (sessionKey.includes(":group-chat:")) return "groupChat";
   return "agentReplies";
@@ -91,12 +89,9 @@ export function shouldSendPush(sessionKey: string): boolean {
 // ── RPC Registration ──
 
 export function registerNotifPrefsRPC(api: OpenClawPluginApi) {
-  api.registerGatewayMethod(
-    "aight.notif.getPrefs",
-    ({ respond }: GatewayRequestHandlerOptions) => {
-      respond(true, loadNotifPrefs());
-    },
-  );
+  api.registerGatewayMethod("aight.notif.getPrefs", ({ respond }: GatewayRequestHandlerOptions) => {
+    respond(true, loadNotifPrefs());
+  });
 
   api.registerGatewayMethod(
     "aight.notif.setPrefs",
@@ -111,9 +106,7 @@ export function registerNotifPrefsRPC(api: OpenClawPluginApi) {
       if (update.muteUntil !== undefined) current.muteUntil = update.muteUntil;
 
       saveNotifPrefs(current);
-      api.logger.info(
-        `[aight-utils] Notification prefs updated: ${JSON.stringify(current)}`,
-      );
+      api.logger.info(`[aight-utils] Notification prefs updated: ${JSON.stringify(current)}`);
       respond(true, current);
     },
   );

@@ -141,9 +141,7 @@ export function registerPushHook(api: OpenClawPluginApi) {
               err.includes("devicetokennotfortopic") ||
               err.includes("expired")
             ) {
-              api.logger.info(
-                `[aight-utils] Pruning stale device token: ${device.deviceId}`,
-              );
+              api.logger.info(`[aight-utils] Pruning stale device token: ${device.deviceId}`);
               unregisterToken(device.deviceId);
             }
           }

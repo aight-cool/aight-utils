@@ -6,18 +6,18 @@ The `aight-utils` plugin extends the OpenClaw gateway with Aight-specific functi
 
 ## Key Files
 
-| File | Purpose |
-|------|---------|
-| `src/bootstrap.ts` | Injects `AIGHT.md` into every agent session via `before_agent_start` hook |
-| `src/config.ts` | RPC methods for reading/patching gateway config (`aight.config.get`, `aight.config.patch`) |
-| `src/items.ts` | RPC methods for Aight Today view items (`aight.items.*`) |
-| `src/push.ts` | Push notification support (`aight.push.*`) |
-| `src/push-hook.ts` | Hook that sends push notifications on agent replies |
-| `src/groups.ts` | Group chat related utilities |
-| `src/health.ts` | Health check endpoint |
-| `src/version.ts` | Version reporting |
-| `src/reminders.ts` | Reminder/trigger support |
-| `src/defaults.ts` | Default configuration values |
+| File               | Purpose                                                                                    |
+| ------------------ | ------------------------------------------------------------------------------------------ |
+| `src/bootstrap.ts` | Injects `AIGHT.md` into every agent session via `before_agent_start` hook                  |
+| `src/config.ts`    | RPC methods for reading/patching gateway config (`aight.config.get`, `aight.config.patch`) |
+| `src/items.ts`     | RPC methods for Aight Today view items (`aight.items.*`)                                   |
+| `src/push.ts`      | Push notification support (`aight.push.*`)                                                 |
+| `src/push-hook.ts` | Hook that sends push notifications on agent replies                                        |
+| `src/groups.ts`    | Group chat related utilities                                                               |
+| `src/health.ts`    | Health check endpoint                                                                      |
+| `src/version.ts`   | Version reporting                                                                          |
+| `src/reminders.ts` | Reminder/trigger support                                                                   |
+| `src/defaults.ts`  | Default configuration values                                                               |
 
 ## AIGHT.md (Bootstrap)
 
