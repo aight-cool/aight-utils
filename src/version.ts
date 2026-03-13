@@ -2,10 +2,10 @@
  * Version RPC — aight.version
  *
  * Returns current installed version and latest available on npm.
+ * Uses Node built-ins only (no child_process).
  */
 
 import type { OpenClawPluginApi, GatewayRequestHandlerOptions } from "openclaw/plugin-sdk";
-import { execSync } from "node:child_process";
 import { createRequire } from "node:module";
 import { readFileSync } from "node:fs";
 import { join, dirname } from "node:path";
@@ -31,19 +31,13 @@ let cachedGatewayVersion: string | null = null;
 function getGatewayVersion(): string {
   if (cachedGatewayVersion) return cachedGatewayVersion;
   try {
-    const out = execSync("openclaw --version", { timeout: 5000 }).toString().trim();
-    cachedGatewayVersion = out || "unknown";
+    const require_ = createRequire(import.meta.url);
+    const resolved = require_.resolve("openclaw");
+    const pkgPath = join(dirname(resolved), "package.json");
+    const pkg = JSON.parse(readFileSync(pkgPath, "utf8"));
+    cachedGatewayVersion = pkg.version ?? "unknown";
   } catch {
-    // Try to find openclaw's package.json via require.resolve
-    try {
-      const require_ = createRequire(import.meta.url);
-      const resolved = require_.resolve("openclaw");
-      const pkgPath = join(dirname(resolved), "package.json");
-      const pkg = JSON.parse(readFileSync(pkgPath, "utf8"));
-      cachedGatewayVersion = pkg.version ?? "unknown";
-    } catch {
-      cachedGatewayVersion = "unknown";
-    }
+    cachedGatewayVersion = "unknown";
   }
   return cachedGatewayVersion!;
 }
