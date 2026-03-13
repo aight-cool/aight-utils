@@ -4,9 +4,8 @@
   "description": "OpenClaw gateway plugin for Aight App: push notifications, Today items, config RPC, and agent bootstrap",
   "type": "module",
   "files": [
-    "index.ts",
-    "src/",
-    "hooks/",
+    "dist/",
+    "hooks/**/HOOK.md",
     "openclaw.plugin.json",
     "README.md",
     "LICENSE"
@@ -29,6 +28,8 @@
     "lint": "eslint . --ext .ts",
     "format": "prettier --check .",
     "format:fix": "prettier --write .",
+    "build": "tsup",
+    "prepublishOnly": "npm run build",
     "ci": "npm run typecheck && npm run lint && npm run format && npm test"
   },
   "dependencies": {
@@ -45,13 +46,14 @@
     "eslint": "^9.39.2",
     "openclaw": "*",
     "prettier": "^3.8.1",
+    "tsup": "^8.5.1",
     "typescript": "^5.7.0",
     "typescript-eslint": "^8.55.0",
     "vitest": "^3.0.0"
   },
   "openclaw": {
     "extensions": [
-      "./index.ts"
+      "./dist/index.js"
     ]
   }
 }
