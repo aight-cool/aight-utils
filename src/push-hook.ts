@@ -4,7 +4,8 @@
 
 import type { OpenClawPluginApi } from "openclaw/plugin-sdk";
 import { getPluginConfig } from "./config.js";
-import { sendPush, loadTokens, unregisterToken } from "./push.js";
+import { loadTokens, unregisterToken } from "./push-store.js";
+import { sendPush } from "./push-net.js";
 import { loadGroupName } from "./groups.js";
 import { shouldSendPush } from "./notif-prefs.js";
 
@@ -119,7 +120,7 @@ export function registerPushHook(api: OpenClawPluginApi) {
         if (!device.sendKey) continue;
         try {
           const pushResult = await sendPush(
-            device.deviceId,
+            device,
             {
               title: pushTitle.trim(),
               subtitle: pushSubtitle,

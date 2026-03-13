@@ -5,7 +5,8 @@
 import type { OpenClawPluginApi } from "openclaw/plugin-sdk";
 import type { AightConfig } from "./config.js";
 import { loadItems, saveItems } from "./items.js";
-import { sendPush, loadTokens } from "./push.js";
+import { loadTokens } from "./push-store.js";
+import { sendPush } from "./push-net.js";
 
 const CHECK_INTERVAL_MS = 30_000;
 
@@ -39,7 +40,7 @@ export function registerReminders(api: OpenClawPluginApi, config: AightConfig) {
       for (const device of tokens) {
         try {
           await sendPush(
-            device.deviceId,
+            device,
             {
               title: "Reminder",
               body: item.title,

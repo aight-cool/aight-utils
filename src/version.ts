@@ -6,41 +6,11 @@
  */
 
 import type { OpenClawPluginApi, GatewayRequestHandlerOptions } from "openclaw/plugin-sdk";
-import { createRequire } from "node:module";
-import { readFileSync } from "node:fs";
-import { join, dirname } from "node:path";
-import { fileURLToPath } from "node:url";
 
-let cachedVersion: string | null = null;
+/** Updated by scripts/release.sh — do not edit manually. */
+const VERSION = "0.1.20";
+
 const CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
-
-function getCurrentVersion(): string {
-  if (cachedVersion) return cachedVersion;
-  try {
-    const dir = dirname(fileURLToPath(import.meta.url));
-    const pkg = JSON.parse(readFileSync(join(dir, "..", "package.json"), "utf8"));
-    cachedVersion = pkg.version ?? "unknown";
-  } catch {
-    cachedVersion = "unknown";
-  }
-  return cachedVersion!;
-}
-
-let cachedGatewayVersion: string | null = null;
-
-function getGatewayVersion(): string {
-  if (cachedGatewayVersion) return cachedGatewayVersion;
-  try {
-    const require_ = createRequire(import.meta.url);
-    const resolved = require_.resolve("openclaw");
-    const pkgPath = join(dirname(resolved), "package.json");
-    const pkg = JSON.parse(readFileSync(pkgPath, "utf8"));
-    cachedGatewayVersion = pkg.version ?? "unknown";
-  } catch {
-    cachedGatewayVersion = "unknown";
-  }
-  return cachedGatewayVersion!;
-}
 
 const npmCache = new Map<string, { version: string; checkedAt: number }>();
 
@@ -67,18 +37,14 @@ async function getLatestNpmVersion(pkg: string): Promise<string> {
 export function registerVersion(api: OpenClawPluginApi) {
   api.registerGatewayMethod("aight.version", async ({ respond }: GatewayRequestHandlerOptions) => {
     try {
-      const current = getCurrentVersion();
+      const current = VERSION;
       const latest = await getLatestNpmVersion("@aight-cool/aight-utils");
-      const gateway = getGatewayVersion();
       const gatewayLatest = await getLatestNpmVersion("openclaw");
       respond(true, {
         current,
         latest,
         updateAvailable: latest !== "unknown" && current !== latest,
-        gatewayVersion: gateway,
         gatewayLatest,
-        gatewayUpdateAvailable:
-          gatewayLatest !== "unknown" && gateway !== "unknown" && gateway !== gatewayLatest,
       });
     } catch (err) {
       respond(false, {

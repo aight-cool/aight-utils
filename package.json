@@ -28,7 +28,7 @@
     "lint": "eslint . --ext .ts",
     "format": "prettier --check .",
     "format:fix": "prettier --write .",
-    "build": "tsup",
+    "build": "tsc && cp hooks/aight-bootstrap/HOOK.md dist/hooks/aight-bootstrap/",
     "prepublishOnly": "npm run build",
     "ci": "npm run typecheck && npm run lint && npm run format && npm test"
   },
