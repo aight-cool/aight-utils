@@ -10,6 +10,6 @@
     "declaration": true,
     "sourceMap": true
   },
-  "include": ["index.ts", "src/**/*.ts"],
+  "include": ["index.ts", "src/**/*.ts", "hooks/**/*.ts"],
   "exclude": ["node_modules", "dist", "__tests__"]
 }

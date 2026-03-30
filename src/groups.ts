@@ -7,13 +7,14 @@
 import type { OpenClawPluginApi } from "openclaw/plugin-sdk";
 import { readFileSync, writeFileSync, mkdirSync } from "fs";
 import { join } from "path";
+import { homedir } from "os";
 
 const FILENAME = "group-names.json";
 
 function filePath(api: OpenClawPluginApi): string {
   const dir =
     (api as any).dataDir ??
-    join(process.env.HOME ?? "/tmp", ".openclaw", "plugin-data", "aight-utils");
+    join(homedir(), ".openclaw", "plugin-data", "aight-utils");
   mkdirSync(dir, { recursive: true });
   return join(dir, FILENAME);
 }

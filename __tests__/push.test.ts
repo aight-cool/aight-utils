@@ -93,32 +93,26 @@ describe("push token store", () => {
 });
 
 describe("sendPush", () => {
-  it("fails when no device token exists", async () => {
-    const result = await sendPush("unknown-device", { title: "Test" }, {});
-    expect(result.ok).toBe(false);
-    expect(result.error).toContain("No device token");
-  });
-
   it("fails when no sendKey exists", async () => {
-    registerToken({ deviceId: "dev-1", pushToken: "tok", platform: "ios", registeredAt: "" });
-    const result = await sendPush("dev-1", { title: "Test" }, {});
+    const device = { deviceId: "dev-1", pushToken: "tok", platform: "ios" as const, registeredAt: "" };
+    const result = await sendPush(device, { title: "Test" }, {});
     expect(result.ok).toBe(false);
     expect(result.error).toContain("No sendKey");
   });
 
   it("sends to relay in private mode with sendKey", async () => {
-    registerToken({
+    const device = {
       deviceId: "dev-1",
       pushToken: "tok",
-      platform: "ios",
+      platform: "ios" as const,
       sendKey: "sk123",
       registeredAt: "",
-    });
+    };
     const mockFetch = vi.fn().mockResolvedValue({ ok: true, text: () => "" });
     vi.stubGlobal("fetch", mockFetch);
 
     const result = await sendPush(
-      "dev-1",
+      device,
       { title: "Hello", body: "World" },
       { push: { mode: "private", relayUrl: "https://test.relay" } },
     );
@@ -134,18 +128,18 @@ describe("sendPush", () => {
   });
 
   it("includes text in rich mode", async () => {
-    registerToken({
+    const device = {
       deviceId: "dev-1",
       pushToken: "tok",
-      platform: "ios",
+      platform: "ios" as const,
       sendKey: "sk123",
       registeredAt: "",
-    });
+    };
     const mockFetch = vi.fn().mockResolvedValue({ ok: true, text: () => "" });
     vi.stubGlobal("fetch", mockFetch);
 
     await sendPush(
-      "dev-1",
+      device,
       { title: "Hello", body: "World" },
       { push: { mode: "rich", relayUrl: "https://test.relay" } },
     );

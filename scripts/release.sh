@@ -54,8 +54,11 @@ manifest.version = '$NEW_VERSION';
 fs.writeFileSync(path, JSON.stringify(manifest, null, 2) + '\n');
 "
 
-npx prettier --write package.json openclaw.plugin.json
-git add package.json openclaw.plugin.json
+# Update VERSION constant in src/version.ts
+sed -i '' "s/const VERSION = \".*\"/const VERSION = \"$NEW_VERSION\"/" "$ROOT/src/version.ts"
+
+npx prettier --write package.json openclaw.plugin.json src/version.ts
+git add package.json openclaw.plugin.json src/version.ts
 git commit -m "$NEW_VERSION"
 git tag "v$NEW_VERSION"
 
