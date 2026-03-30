@@ -66,5 +66,4 @@ export function registerGroupRpc(api: OpenClawPluginApi): void {
     removeGroupName(api, groupId);
     respond(true, { ok: true });
   });
-
 }
