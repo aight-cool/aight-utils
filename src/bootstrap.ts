@@ -252,8 +252,16 @@ See the Shortcuts Protocol at the top of this document.
 
 export function registerBootstrap(api: OpenClawPluginApi) {
   try {
-    api.on("before_prompt_build", (_event: unknown, _ctx: { sessionKey?: string }) => {
-      return { prependSystemContext: AIGHT_MD };
+    // Register both hooks for backwards compatibility.
+    // New openclaw merges results from both hooks via `??`, so using the
+    // same field (systemPrompt) ensures the content is injected exactly once.
+    // Old openclaw only fires before_agent_start; new openclaw prefers
+    // before_prompt_build and falls through to the legacy result.
+    api.on("before_prompt_build" as any, (_event: unknown, _ctx: { sessionKey?: string }) => {
+      return { systemPrompt: AIGHT_MD };
+    });
+    api.on("before_agent_start", (_event: unknown, _ctx: { sessionKey?: string }) => {
+      return { systemPrompt: AIGHT_MD };
     });
   } catch (err) {
     api.logger.error(`[aight-utils] Failed to register bootstrap hook: ${err}`);
