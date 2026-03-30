@@ -1,5 +1,5 @@
 /**
- * Agent Bootstrap — injects AIGHT.md at runtime via agent:bootstrap hook
+ * Agent Bootstrap — injects AIGHT.md via before_prompt_build hook
  */
 
 import type { OpenClawPluginApi } from "openclaw/plugin-sdk";

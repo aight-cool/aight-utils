@@ -41,7 +41,10 @@ export async function sendPush(
   config: AightConfig,
 ): Promise<{ ok: boolean; error?: string }> {
   if (!device.sendKey) {
-    return { ok: false, error: `No sendKey for device ${device.deviceId} — re-register to obtain one` };
+    return {
+      ok: false,
+      error: `No sendKey for device ${device.deviceId} — re-register to obtain one`,
+    };
   }
 
   const relayUrl = config.push?.relayUrl ?? DEFAULT_RELAY_URL;
