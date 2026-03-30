@@ -67,5 +67,4 @@ export function registerGroupRpc(api: OpenClawPluginApi): void {
     respond(true, { ok: true });
   });
 
-  api.logger.info("[aight-utils] Group name RPC registered");
 }

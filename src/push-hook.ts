@@ -153,7 +153,6 @@ export function registerPushHook(api: OpenClawPluginApi) {
       }
     });
 
-    api.logger.info("[aight-utils] Push hook registered (agent_end)");
   } catch (err) {
     api.logger.error(
       `[aight-utils] Failed to register push hook: ${err instanceof Error ? err.message : String(err)}`,

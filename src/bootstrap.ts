@@ -252,16 +252,9 @@ See the Shortcuts Protocol at the top of this document.
 
 export function registerBootstrap(api: OpenClawPluginApi) {
   try {
-    api.logger.info("[aight-utils] Attempting to register bootstrap hook...");
-    api.logger.info(`[aight-utils] api.on type: ${typeof api.on}`);
-    api.on("before_agent_start", (_event: unknown, ctx: { sessionKey?: string }) => {
-      // Inject AIGHT.md context into every agent session
-      api.logger.info(
-        `[aight-utils] Bootstrap: injecting AIGHT.md into session ${ctx?.sessionKey}`,
-      );
-      return { systemPrompt: AIGHT_MD };
+    api.on("before_prompt_build", (_event: unknown, _ctx: { sessionKey?: string }) => {
+      return { prependSystemContext: AIGHT_MD };
     });
-    api.logger.info("[aight-utils] Bootstrap hook registered (before_agent_start)");
   } catch (err) {
     api.logger.error(`[aight-utils] Failed to register bootstrap hook: ${err}`);
   }
