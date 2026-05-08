@@ -12,9 +12,7 @@ import { homedir } from "os";
 const FILENAME = "group-names.json";
 
 function filePath(api: OpenClawPluginApi): string {
-  const dir =
-    (api as any).dataDir ??
-    join(homedir(), ".openclaw", "plugin-data", "aight-utils");
+  const dir = (api as any).dataDir ?? join(homedir(), ".openclaw", "plugin-data", "aight-utils");
   mkdirSync(dir, { recursive: true });
   return join(dir, FILENAME);
 }
