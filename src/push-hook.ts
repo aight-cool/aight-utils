@@ -9,39 +9,45 @@ import { sendPush } from "./push-net.js";
 import { loadGroupName } from "./groups.js";
 import { shouldSendPush } from "./notif-prefs.js";
 
+const HIDDEN_SUFFIXES = [
+  ":aight-config",
+  ":aight-pentest",
+  ":speak",
+  ":structured_content",
+  ":main",
+  "security-fix",
+  "skill-scan",
+];
+const HIDDEN_SUBSTRINGS = ["subagent", "security-audit", "_skill-audit-", "_ensure-skill-defender"];
+
+const META_RESPONSES = ["NO_REPLY", "REPLY_SKIP", "ANNOUNCE_SKIP", "HEARTBEAT_OK"];
+const STALE_TOKEN_ERRORS = ["baddevicetoken", "unregistered", "devicetokennotfortopic", "expired"];
+
 export function registerPushHook(api: OpenClawPluginApi) {
   try {
     api.on("agent_end", async (event, ctx) => {
-      api.logger.info(
-        `[aight-utils] agent_end fired session=${ctx.sessionKey} agent=${ctx.agentId}`,
-      );
+      const sessionKey = ctx.sessionKey ?? "";
+      api.logger.info(`[aight-utils] agent_end fired session=${sessionKey} agent=${ctx.agentId}`);
       const tokens = loadTokens();
       if (tokens.length === 0) return;
 
       // Skip hidden/internal sessions — no push notifications for config,
       // security, voice, sub-agent, or other background sessions.
-      const sk = ctx.sessionKey ?? "";
       if (
-        sk.endsWith(":aight-config") ||
-        sk.endsWith(":aight-pentest") ||
-        sk.endsWith(":speak") ||
-        sk.endsWith(":structured_content") ||
-        sk.endsWith(":main") ||
-        sk.includes("subagent") ||
-        sk.includes("security-audit") ||
-        sk.includes("_skill-audit-") ||
-        sk.includes("_ensure-skill-defender") ||
-        sk.endsWith("security-fix") ||
-        sk.endsWith("skill-scan")
+        HIDDEN_SUFFIXES.some((s) => sessionKey.endsWith(s)) ||
+        HIDDEN_SUBSTRINGS.some((s) => sessionKey.includes(s))
       ) {
-        api.logger.info(`[aight-utils] Skipping hidden session push: ${sk}`);
+        api.logger.info(`[aight-utils] Skipping hidden session push: ${sessionKey}`);
+        return;
+      }
+
+      // Notification preference gate — bail before expensive preview extraction
+      if (!shouldSendPush(sessionKey)) {
+        api.logger.info(`[aight-utils] Push suppressed by notification prefs: ${sessionKey}`);
         return;
       }
 
       const msgs = event.messages ?? [];
-      api.logger.info(
-        `[aight-utils] messages count=${msgs.length} roles=${msgs.map((m: any) => m.role).join(",")}`,
-      );
 
       // Extract last assistant message - try string and array content formats
       let preview = "";
@@ -69,9 +75,7 @@ export function registerPushHook(api: OpenClawPluginApi) {
         return;
       }
 
-      // Skip internal/meta responses
-      const skip = ["NO_REPLY", "REPLY_SKIP", "ANNOUNCE_SKIP", "HEARTBEAT_OK"];
-      if (skip.includes(preview.trim())) {
+      if (META_RESPONSES.includes(preview.trim())) {
         api.logger.info(`[aight-utils] Skipping meta response: ${preview.trim()}`);
         return;
       }
@@ -85,10 +89,9 @@ export function registerPushHook(api: OpenClawPluginApi) {
       const displayName = agent?.name ?? agent?.identity?.name ?? agentId;
 
       // Resolve group chat name for push subtitle (WhatsApp-style layout)
-      const pushTitle = displayName;
       let pushSubtitle: string | undefined;
-      if (sk.includes(":group-chat:")) {
-        const groupId = sk.split(":group-chat:")[1];
+      if (sessionKey.includes(":group-chat:")) {
+        const groupId = sessionKey.split(":group-chat:")[1];
         if (groupId) {
           const groupName = loadGroupName(api, groupId);
           if (groupName) {
@@ -99,39 +102,25 @@ export function registerPushHook(api: OpenClawPluginApi) {
 
       const cleanBody = preview.trim().replace(/\n+/g, " ").trim();
 
-      // ── Notification preference gate ──
-      // Check if this category is muted — if so, don't send the push at all.
-      if (!shouldSendPush(sk)) {
-        api.logger.info(`[aight-utils] Push suppressed by notification prefs: ${sk}`);
-        return;
-      }
+      const pushPayload = {
+        title: displayName.trim(),
+        subtitle: pushSubtitle,
+        body: cleanBody,
+        data: { sessionKey, agentId },
+      };
 
       for (const device of tokens) {
         if (!device.sendKey) continue;
         try {
-          const pushResult = await sendPush(
-            device,
-            {
-              title: pushTitle.trim(),
-              subtitle: pushSubtitle,
-              body: cleanBody,
-              data: { sessionKey: ctx.sessionKey, agentId },
-            },
-            freshConfig,
-          );
+          const pushResult = await sendPush(device, pushPayload, freshConfig);
           api.logger.info(
-            `[aight-utils] Push sent: session=${ctx.sessionKey} device=${device.deviceId} ok=${pushResult.ok}${pushResult.error ? ` error=${pushResult.error}` : ""}`,
+            `[aight-utils] Push sent: session=${sessionKey} device=${device.deviceId} ok=${pushResult.ok}${pushResult.error ? ` error=${pushResult.error}` : ""}`,
           );
 
           // Auto-prune stale tokens — if the relay rejects the token, remove it
           if (!pushResult.ok && pushResult.error) {
-            const err = pushResult.error.toLowerCase();
-            if (
-              err.includes("baddevicetoken") ||
-              err.includes("unregistered") ||
-              err.includes("devicetokennotfortopic") ||
-              err.includes("expired")
-            ) {
+            const errLower = pushResult.error.toLowerCase();
+            if (STALE_TOKEN_ERRORS.some((e) => errLower.includes(e))) {
               api.logger.info(`[aight-utils] Pruning stale device token: ${device.deviceId}`);
               unregisterToken(device.deviceId);
             }

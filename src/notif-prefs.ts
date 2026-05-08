@@ -43,7 +43,14 @@ export function loadNotifPrefs(): NotifPrefs {
     if (!fs.existsSync(PREFS_FILE)) return { ...DEFAULTS };
     const raw = fs.readFileSync(PREFS_FILE, "utf-8");
     const parsed = JSON.parse(raw);
-    return { ...DEFAULTS, ...parsed };
+    const prefs = { ...DEFAULTS, ...parsed };
+    // Normalize expired timed mute in memory so getPrefs returns coherent
+    // state to the app. No write — disk is reconciled on the next setPrefs.
+    if (prefs.globalMute && prefs.muteUntil && Date.now() >= new Date(prefs.muteUntil).getTime()) {
+      prefs.globalMute = false;
+      prefs.muteUntil = null;
+    }
+    return prefs;
   } catch {
     return { ...DEFAULTS };
   }
@@ -70,16 +77,8 @@ export function shouldSendPush(sessionKey: string): boolean {
 
   const prefs = loadNotifPrefs();
 
-  // Global mute
-  if (prefs.globalMute) {
-    if (!prefs.muteUntil) return false; // indefinite
-    const expiry = new Date(prefs.muteUntil).getTime();
-    if (Date.now() < expiry) return false;
-    // Mute expired — clear it
-    prefs.globalMute = false;
-    prefs.muteUntil = null;
-    saveNotifPrefs(prefs);
-  }
+  // Global mute (loadNotifPrefs already normalizes expired timed mutes)
+  if (prefs.globalMute) return false;
 
   // Category check
   const category = classifySessionKey(sessionKey);
