@@ -1,5 +1,5 @@
 /**
- * Agent Bootstrap — injects AIGHT.md at runtime via agent:bootstrap hook
+ * Agent Bootstrap — injects AIGHT.md via before_prompt_build hook
  */
 
 import type { OpenClawPluginApi } from "openclaw/plugin-sdk";
@@ -252,16 +252,12 @@ See the Shortcuts Protocol at the top of this document.
 
 export function registerBootstrap(api: OpenClawPluginApi) {
   try {
-    api.logger.info("[aight-utils] Attempting to register bootstrap hook...");
-    api.logger.info(`[aight-utils] api.on type: ${typeof api.on}`);
-    api.on("before_agent_start", (_event: unknown, ctx: { sessionKey?: string }) => {
-      // Inject AIGHT.md context into every agent session
-      api.logger.info(
-        `[aight-utils] Bootstrap: injecting AIGHT.md into session ${ctx?.sessionKey}`,
-      );
-      return { systemPrompt: AIGHT_MD };
-    });
-    api.logger.info("[aight-utils] Bootstrap hook registered (before_agent_start)");
+    // Register both event names so we work on old (before_agent_start only) and
+    // new (before_prompt_build) openclaw. Identical return shape lets the new
+    // SDK's `??` merge dedupe the injection.
+    const handler = () => ({ systemPrompt: AIGHT_MD });
+    api.on("before_prompt_build" as any, handler);
+    api.on("before_agent_start", handler);
   } catch (err) {
     api.logger.error(`[aight-utils] Failed to register bootstrap hook: ${err}`);
   }

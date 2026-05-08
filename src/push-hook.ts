@@ -69,14 +69,6 @@ export function registerPushHook(api: OpenClawPluginApi) {
         return;
       }
 
-      // Skip hidden/internal sessions (aight-config, structured_content, etc.)
-      const sessionKey_ = ctx.sessionKey ?? "";
-      const HIDDEN_SESSIONS = ["aight-config", "structured_content"];
-      if (HIDDEN_SESSIONS.some((h) => sessionKey_.includes(h))) {
-        api.logger.info(`[aight-utils] Skipping hidden session: ${sessionKey_}`);
-        return;
-      }
-
       // Skip internal/meta responses
       const skip = ["NO_REPLY", "REPLY_SKIP", "ANNOUNCE_SKIP", "HEARTBEAT_OK"];
       if (skip.includes(preview.trim())) {
@@ -95,9 +87,8 @@ export function registerPushHook(api: OpenClawPluginApi) {
       // Resolve group chat name for push subtitle (WhatsApp-style layout)
       const pushTitle = displayName;
       let pushSubtitle: string | undefined;
-      const sessionKey = ctx.sessionKey ?? "";
-      if (sessionKey.includes(":group-chat:")) {
-        const groupId = sessionKey.split(":group-chat:")[1];
+      if (sk.includes(":group-chat:")) {
+        const groupId = sk.split(":group-chat:")[1];
         if (groupId) {
           const groupName = loadGroupName(api, groupId);
           if (groupName) {
@@ -110,9 +101,8 @@ export function registerPushHook(api: OpenClawPluginApi) {
 
       // ── Notification preference gate ──
       // Check if this category is muted — if so, don't send the push at all.
-      const sk_ = ctx.sessionKey ?? "";
-      if (!shouldSendPush(sk_)) {
-        api.logger.info(`[aight-utils] Push suppressed by notification prefs: ${sk_}`);
+      if (!shouldSendPush(sk)) {
+        api.logger.info(`[aight-utils] Push suppressed by notification prefs: ${sk}`);
         return;
       }
 
@@ -153,8 +143,6 @@ export function registerPushHook(api: OpenClawPluginApi) {
         }
       }
     });
-
-    api.logger.info("[aight-utils] Push hook registered (agent_end)");
   } catch (err) {
     api.logger.error(
       `[aight-utils] Failed to register push hook: ${err instanceof Error ? err.message : String(err)}`,

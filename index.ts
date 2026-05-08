@@ -70,8 +70,6 @@ const aightPlugin = {
     registerVersion(api);
     registerGroupRpc(api);
     registerNotifPrefsRPC(api);
-
-    api.logger.info("[aight-utils] Plugin loaded");
   },
 };
 

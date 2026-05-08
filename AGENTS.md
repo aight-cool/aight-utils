@@ -8,7 +8,7 @@ The `aight-utils` plugin extends the OpenClaw gateway with Aight-specific functi
 
 | File               | Purpose                                                                                    |
 | ------------------ | ------------------------------------------------------------------------------------------ |
-| `src/bootstrap.ts` | Injects `AIGHT.md` into every agent session via `before_agent_start` hook                  |
+| `src/bootstrap.ts` | Injects `AIGHT.md` via `before_prompt_build` (with `before_agent_start` fallback)          |
 | `src/config.ts`    | RPC methods for reading/patching gateway config (`aight.config.get`, `aight.config.patch`) |
 | `src/items.ts`     | RPC methods for Aight Today view items (`aight.items.*`)                                   |
 | `src/push.ts`      | Push notification support (`aight.push.*`)                                                 |

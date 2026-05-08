@@ -94,7 +94,12 @@ describe("push token store", () => {
 
 describe("sendPush", () => {
   it("fails when no sendKey exists", async () => {
-    const device = { deviceId: "dev-1", pushToken: "tok", platform: "ios" as const, registeredAt: "" };
+    const device = {
+      deviceId: "dev-1",
+      pushToken: "tok",
+      platform: "ios" as const,
+      registeredAt: "",
+    };
     const result = await sendPush(device, { title: "Test" }, {});
     expect(result.ok).toBe(false);
     expect(result.error).toContain("No sendKey");

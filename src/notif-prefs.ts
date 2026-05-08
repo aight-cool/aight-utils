@@ -110,6 +110,4 @@ export function registerNotifPrefsRPC(api: OpenClawPluginApi) {
       respond(true, current);
     },
   );
-
-  api.logger.info("[aight-utils] Notification prefs RPC registered");
 }
