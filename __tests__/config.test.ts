@@ -59,11 +59,11 @@ describe("config RPC", () => {
     await methods["aight.status"]({ respond });
     expect(respond).toHaveBeenCalledWith(
       true,
-      expect.objectContaining({ ok: true, version: "0.1.0", pushHookActive: false }),
+      expect.objectContaining({ ok: true, version: "0.1.0", pushHookEnabled: false }),
     );
   });
 
-  it("aight.status reports pushHookActive=true when flag set", async () => {
+  it("aight.status reports pushHookEnabled=true when flag set", async () => {
     const { api, methods } = createMockApi();
     api.runtime.config.loadConfig = vi.fn().mockResolvedValue({
       plugins: {
@@ -75,6 +75,6 @@ describe("config RPC", () => {
     registerConfig(api);
     const respond = vi.fn();
     await methods["aight.status"]({ respond });
-    expect(respond).toHaveBeenCalledWith(true, expect.objectContaining({ pushHookActive: true }));
+    expect(respond).toHaveBeenCalledWith(true, expect.objectContaining({ pushHookEnabled: true }));
   });
 });

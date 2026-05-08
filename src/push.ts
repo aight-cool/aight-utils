@@ -24,6 +24,15 @@ export type { PushPayload } from "./push-net.js";
 // ── Registration ──
 
 export function registerPush(api: OpenClawPluginApi, _config: AightConfig) {
+  // Recovery for existing users: if any tokens are already registered (from
+  // a previous version that didn't enable allowConversationAccess), enable
+  // it now so push previews work without requiring re-registration.
+  if (loadTokens().length > 0) {
+    ensurePushHookEnabled(api).catch(() => {
+      /* errors already logged inside the helper */
+    });
+  }
+
   api.registerGatewayMethod(
     "aight.push.register",
     ({ params, respond }: GatewayRequestHandlerOptions) => {
