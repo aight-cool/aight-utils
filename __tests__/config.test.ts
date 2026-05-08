@@ -52,14 +52,29 @@ describe("config RPC", () => {
     expect(respond).toHaveBeenCalledWith(false, { error: "params must be an object" });
   });
 
-  it("aight.status returns status info", () => {
+  it("aight.status returns status info", async () => {
     const { api, methods } = createMockApi();
     registerConfig(api);
     const respond = vi.fn();
-    methods["aight.status"]({ respond });
+    await methods["aight.status"]({ respond });
     expect(respond).toHaveBeenCalledWith(
       true,
-      expect.objectContaining({ ok: true, version: "0.1.0" }),
+      expect.objectContaining({ ok: true, version: "0.1.0", pushHookActive: false }),
     );
+  });
+
+  it("aight.status reports pushHookActive=true when flag set", async () => {
+    const { api, methods } = createMockApi();
+    api.runtime.config.loadConfig = vi.fn().mockResolvedValue({
+      plugins: {
+        entries: {
+          "aight-utils": { hooks: { allowConversationAccess: true } },
+        },
+      },
+    });
+    registerConfig(api);
+    const respond = vi.fn();
+    await methods["aight.status"]({ respond });
+    expect(respond).toHaveBeenCalledWith(true, expect.objectContaining({ pushHookActive: true }));
   });
 });

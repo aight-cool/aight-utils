@@ -10,6 +10,7 @@
 
 import type { OpenClawPluginApi, GatewayRequestHandlerOptions } from "openclaw/plugin-sdk";
 import type { AightConfig } from "./config.js";
+import { ensurePushHookEnabled } from "./config.js";
 import { DEFAULT_RELAY_URL } from "./defaults.js";
 import { loadTokens, registerToken, unregisterToken } from "./push-store.js";
 import { obtainSendKey, sendPush } from "./push-net.js";
@@ -53,6 +54,13 @@ export function registerPush(api: OpenClawPluginApi, _config: AightConfig) {
 
       respond(true, { ok: true, deviceId });
       api.logger.info(`[aight-utils] Push token registered for device ${deviceId}`);
+
+      // The user explicitly opted into notifications — enable conversation
+      // access so the agent_end hook can build push previews. Required by
+      // openclaw 2026.5.x for non-bundled plugins.
+      ensurePushHookEnabled(api).catch(() => {
+        /* errors already logged inside the helper */
+      });
 
       // Obtain sendKey from relay in background
       const relayUrl = _config.push?.relayUrl ?? DEFAULT_RELAY_URL;

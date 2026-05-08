@@ -40,6 +40,55 @@ export function getPluginConfig(api: OpenClawPluginApi): AightConfig {
   return raw && typeof raw === "object" && !Array.isArray(raw) ? (raw as AightConfig) : {};
 }
 
+/**
+ * Read whether the agent_end push hook is allowed conversation access.
+ * OpenClaw 2026.5.x blocks non-bundled plugin hooks from seeing message
+ * payloads unless `plugins.entries.aight-utils.hooks.allowConversationAccess`
+ * is explicitly true.
+ */
+export async function isPushHookEnabled(api: OpenClawPluginApi): Promise<boolean> {
+  try {
+    const currentConfig = (await api.runtime.config.loadConfig()) as any;
+    return (
+      currentConfig?.plugins?.entries?.["aight-utils"]?.hooks?.allowConversationAccess === true
+    );
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Ensure `allowConversationAccess` is true so the agent_end hook can build
+ * push previews from message content. Idempotent — only writes if unset.
+ */
+export async function ensurePushHookEnabled(api: OpenClawPluginApi): Promise<boolean> {
+  try {
+    const currentConfig = (await api.runtime.config.loadConfig()) as any;
+    const pluginEntry = currentConfig?.plugins?.entries?.["aight-utils"] ?? {};
+    if (pluginEntry.hooks?.allowConversationAccess === true) return true;
+
+    await api.runtime.config.writeConfigFile({
+      ...currentConfig,
+      plugins: {
+        ...currentConfig.plugins,
+        entries: {
+          ...currentConfig.plugins?.entries,
+          "aight-utils": {
+            ...pluginEntry,
+            hooks: { ...pluginEntry.hooks, allowConversationAccess: true },
+          },
+        },
+      },
+    });
+    api.logger.info("[aight-utils] Enabled hooks.allowConversationAccess for push hook");
+    return true;
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    api.logger.warn(`[aight-utils] Failed to enable push hook conversation access: ${msg}`);
+    return false;
+  }
+}
+
 export function registerConfig(api: OpenClawPluginApi) {
   api.registerGatewayMethod("aight.config.get", ({ respond }: GatewayRequestHandlerOptions) => {
     respond(true, getClientSafeConfig(getPluginConfig(api)));
@@ -109,8 +158,9 @@ export function registerConfig(api: OpenClawPluginApi) {
     },
   );
 
-  api.registerGatewayMethod("aight.status", ({ respond }: GatewayRequestHandlerOptions) => {
+  api.registerGatewayMethod("aight.status", async ({ respond }: GatewayRequestHandlerOptions) => {
     const cfg = getPluginConfig(api);
+    const pushHookActive = await isPushHookEnabled(api);
     respond(true, {
       ok: true,
       version: "0.1.0",
@@ -118,6 +168,7 @@ export function registerConfig(api: OpenClawPluginApi) {
         mode: cfg.push?.mode ?? DEFAULT_PUSH_MODE,
         relayUrl: cfg.push?.relayUrl ?? "https://push.aight.app",
       },
+      pushHookActive,
       today: {
         enabled: cfg.today?.enabled ?? true,
       },
