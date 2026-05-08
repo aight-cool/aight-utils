@@ -3,6 +3,12 @@
   "name": "Aight App Utils",
   "description": "Aight App: Push notifications, Today items, config RPC, and agent bootstrap",
   "version": "0.1.21",
+  "activation": {
+    "onStartup": true
+  },
+  "contracts": {
+    "tools": ["aight_item"]
+  },
   "configSchema": {
     "type": "object",
     "additionalProperties": false,
