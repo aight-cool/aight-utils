@@ -33,6 +33,24 @@ export function loadGroupName(api: OpenClawPluginApi, groupId: string): string |
   return loadAll(api)[groupId];
 }
 
+/**
+ * Extract the local group ID from a gateway session key. Returns null for
+ * non-group-chat sessions. Strips the `:v{N}` rotation suffix that gets
+ * appended once a group chat hits the gateway history cap; without this,
+ * `loadGroupName` would miss for rotated groups (the app stores names
+ * under the bare local ID).
+ *
+ * Mirrors `parseGroupChatId` in the app (src/lib/group-chat-store.ts).
+ */
+export function parseGroupChatId(sessionKey: string): string | null {
+  const marker = ":group-chat:";
+  const idx = sessionKey.indexOf(marker);
+  if (idx < 0) return null;
+  const tail = sessionKey.slice(idx + marker.length);
+  const groupId = tail.split(":", 1)[0];
+  return groupId || null;
+}
+
 export function registerGroupName(api: OpenClawPluginApi, groupId: string, name: string): void {
   const data = loadAll(api);
   data[groupId] = name;
