@@ -6,7 +6,7 @@ import type { OpenClawPluginApi } from "openclaw/plugin-sdk";
 import { getPluginConfig } from "./config.js";
 import { loadTokens, unregisterToken } from "./push-store.js";
 import { sendPush } from "./push-net.js";
-import { loadGroupName } from "./groups.js";
+import { loadGroupName, parseGroupChatId } from "./groups.js";
 import { shouldSendPush } from "./notif-prefs.js";
 
 const HIDDEN_SUFFIXES = [
@@ -90,13 +90,11 @@ export function registerPushHook(api: OpenClawPluginApi) {
 
       // Resolve group chat name for push subtitle (WhatsApp-style layout)
       let pushSubtitle: string | undefined;
-      if (sessionKey.includes(":group-chat:")) {
-        const groupId = sessionKey.split(":group-chat:")[1];
-        if (groupId) {
-          const groupName = loadGroupName(api, groupId);
-          if (groupName) {
-            pushSubtitle = groupName;
-          }
+      const groupId = parseGroupChatId(sessionKey);
+      if (groupId) {
+        const groupName = loadGroupName(api, groupId);
+        if (groupName) {
+          pushSubtitle = groupName;
         }
       }
 
