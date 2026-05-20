@@ -40,58 +40,11 @@ The Aight app handles all speech-to-text and text-to-speech on the client side.
 - **Outbound:** Always respond with plain text only. If the user has voice mode enabled, the app will convert your text response to speech automatically.
 - **Never use the TTS tool or send audio files** when the channel is an Aight app client. The app cannot stream audio from the gateway and it will cause playback issues.
 
-## Sending Media to Aight (Images, PDFs, Docs, Audio, Video)
+## Sending Images to Aight
 
-The OpenClaw gateway serves agent-emitted files to the Aight app via signed-ticket HTTP URLs — the exact same way the official OpenClaw iOS app receives media. Your job is to drop a one-line \`MEDIA:\` token into your reply pointing at the file on disk. The gateway picks it up, mints a short-lived access ticket, and streams the bytes to the device on demand. No base64 encoding by hand, no output-token-budget worries, no "too large" apologies for normal-chat-sized attachments. (Very large files — multi-GB — may fail to load on cell connections, but anything you'd reasonably share in a chat is fine.)
+**Use a tool that produces image bytes** — \`browser\` screenshot, image generation, chart generation, file-attachment tools, etc. The gateway captures those bytes, caches them, and emits a structured image content block; Aight renders it inline. You don't have to do anything else.
 
-**Format (use exactly this shape):**
-
-\`\`\`
-MEDIA: /absolute/path/to/file.png
-\`\`\`
-
-Rules:
-- On its own line. Mid-paragraph won't be picked up.
-- Absolute path (starts with \`/\`) or \`~/...\` for the user's home. Relative paths fail.
-- One file per \`MEDIA:\` line.
-
-**Supported kinds (auto-detected from extension):**
-- **Images** — \`.png .jpg .jpeg .gif .webp .svg .bmp\` → rendered inline
-- **Documents** — \`.pdf .txt .md .csv .json\` and similar → tappable attachment, fullscreen viewer
-- **Audio** — \`.mp3 .wav .m4a .ogg\` → audio-player attachment
-- **Video** — \`.mp4 .mov .webm\` → video-player attachment
-
-**Example — sending a chart you just generated:**
-
-\`\`\`
-exec: ./make-chart.sh > /tmp/openclaw/weekly-active-users.png
-\`\`\`
-
-Then in your reply:
-
-\`\`\`
-Here are the weekly actives:
-
-MEDIA: /tmp/openclaw/weekly-active-users.png
-
-Notable spike on Tuesday — probably from the launch tweet.
-\`\`\`
-
-**Example — PDF report:**
-
-\`\`\`
-Saved the Q3 report:
-
-MEDIA: /Users/bruno/reports/q3-2026.pdf
-\`\`\`
-
-**Public URLs** go in normal markdown links \`[label](https://...)\`, not \`MEDIA:\`. \`MEDIA:\` is for files on the gateway machine.
-
-**Inline base64** (\`![alt](data:image/png;base64,...)\`) is still accepted by the renderer for in-context-generated images (DALL-E, SVG) — but prefer \`MEDIA:\` for anything from disk. Inline base64 eats your output token budget; \`MEDIA:\` doesn't.
-
-**Do NOT:**
-- Try to read the file and base64-encode it yourself. The gateway already streams the bytes.
-- Refuse or apologize for "file too large" on anything in the single-MB-to-tens-of-MB range. The file streams from the gateway; your reply size is unaffected.
+**Do NOT type \`MEDIA: /path\` or \`![](data:image/...;base64,...)\` into your reply text.** Aight does not render those formats — only structured image content from tool outputs renders. If the user asks for "the chart" or "a screenshot," call the corresponding tool; don't try to inline file paths or base64.
 
 ## Public Figure Agent Creation (Aight App)
 
