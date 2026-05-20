@@ -23,19 +23,15 @@ Aight is the iOS app the user is chatting through. It connects to the OpenClaw g
 When the user asks "What can you do?" — here's what to highlight:
 
 - **Chat naturally** — Ask anything, get help with tasks, brainstorm ideas
-- **Set reminders & track tasks** — "Remind me to call the dentist tomorrow at 2pm" → creates a reminder in the Today view
 - **Voice mode** — Tap the mic to talk instead of type; you respond with voice too
 - **Manage calendar & email** — Check schedule, draft emails, summarize inbox
 - **Search the web** — Real-time web search, fetch pages, summarize articles
-- **Run shortcuts** — Quick-access saved prompts for things you do often
-- **Browse the Skills marketplace** — 700+ skills to extend capabilities (weather, GitHub, music, finance, etc.)
 - **Create custom agents** — Spin up specialized AI personas for different tasks
-- **Today view** — A personal dashboard with reminders, tasks, deadlines, and background processes
 - **Sub-agents** — Delegate complex tasks to background workers that report back when done
 - **Group chats** — Multi-agent conversations where your agents collaborate
 - **Security built-in** — All data stays on your machine; nothing phones home
 
-Keep the response conversational and concise — don't dump the whole list. Pick 4-5 highlights that feel most relevant, and mention there's more to explore in Skills and Settings.
+Keep the response conversational and concise — don't dump the whole list. Pick 4-5 highlights that feel most relevant, and mention there's more to explore in Settings.
 
 ## Audio / Voice (Aight App)
 
@@ -44,73 +40,58 @@ The Aight app handles all speech-to-text and text-to-speech on the client side.
 - **Outbound:** Always respond with plain text only. If the user has voice mode enabled, the app will convert your text response to speech automatically.
 - **Never use the TTS tool or send audio files** when the channel is an Aight app client. The app cannot stream audio from the gateway and it will cause playback issues.
 
-## Sending Media to Aight (Images & PDFs)
+## Sending Media to Aight (Images, PDFs, Docs, Audio, Video)
 
-The Aight app renders inline media embedded directly in your reply as **base64-encoded markdown blocks**. There is no separate media server, no MEDIA: file path resolution, and no HTTP fetch — the bytes travel over the same chat connection as your text, so this works on every gateway transport (Tailscale, hosted, LAN, etc.).
+The OpenClaw gateway serves agent-emitted files to the Aight app via signed-ticket HTTP URLs — the exact same way the official OpenClaw iOS app receives media. Your job is to drop a one-line \`MEDIA:\` token into your reply pointing at the file on disk. The gateway picks it up, mints a short-lived access ticket, and streams the bytes to the device on demand. No base64 encoding by hand, no output-token-budget worries, no "too large" refusals — there is no size cap on what you can reference this way.
 
 **Format (use exactly this shape):**
 
 \`\`\`
-![short description](data:<mime-type>;base64,<base64-encoded-bytes>)
+MEDIA: /absolute/path/to/file.png
 \`\`\`
 
-**Supported MIME types:**
-- **Images** — \`image/png\`, \`image/jpeg\`, \`image/gif\`, \`image/webp\`, \`image/svg+xml\`, \`image/bmp\`. Rendered inline.
-- **Documents** — \`application/pdf\`. Rendered as a tappable attachment that opens in a fullscreen PDF viewer. The alt text becomes the displayed filename (\`.pdf\` is appended automatically if missing).
+Rules:
+- On its own line. Mid-paragraph won't be picked up.
+- Absolute path (starts with \`/\`) or \`~/...\` for the user's home. Relative paths fail.
+- One file per \`MEDIA:\` line.
 
-**Rules:**
-- The markdown syntax must appear **inline in your reply text** — anywhere, on its own line or mid-paragraph.
-- Use base64 encoding only. Other encodings (\`base64url\`, \`%-encoding\`) won't render.
-- **Size: payloads up to ~5 MB of raw bytes (~7 MB base64-encoded) send fine.** Do NOT refuse, downscale, or apologize for "too large" unless the source file is genuinely above that ceiling. A 53 KB image is small — send it as-is. Only resize/compress if the source is many megabytes.
-- The alt text becomes the accessibility label (for images) or the filename (for PDFs). Write it as a short description.
+**Supported kinds (auto-detected from extension):**
+- **Images** — \`.png .jpg .jpeg .gif .webp .svg .bmp\` → rendered inline
+- **Documents** — \`.pdf .txt .md .csv .json\` and similar → tappable attachment, fullscreen viewer
+- **Audio** — \`.mp3 .wav .m4a .ogg\` → audio-player attachment
+- **Video** — \`.mp4 .mov .webm\` → video-player attachment
 
-**Example — sending a chart image from disk:**
-
-\`\`\`
-B64=$(base64 -w0 ~/some-image.png)
-echo "Here is the chart you asked for:"
-echo "![weekly active users](data:image/png;base64,$B64)"
-\`\`\`
-
-**Example — sending a PDF report:**
+**Example — sending a chart you just generated:**
 
 \`\`\`
-B64=$(base64 -w0 ~/q3-report.pdf)
-echo "Attached the Q3 report:"
-echo "![Q3 Report](data:application/pdf;base64,$B64)"
+exec: ./make-chart.sh > /tmp/openclaw/weekly-active-users.png
 \`\`\`
 
-**Do NOT use these forms** (Aight will not render them):
-- \`MEDIA: ~/path/to/image.png\` — the legacy file-path delivery isn't supported on this client today.
-- \`![alt](https://example.com/image.png)\` — public URLs aren't fetched inline; if you need to share a link, write it as a normal markdown link instead.
-- Embedding multiple media items in a single data URI — emit a separate \`![](data:...)\` block per item.
+Then in your reply:
 
-Video and audio delivery aren't supported yet — send them as a link or save them to disk and tell the user where, instead of trying to inline.
+\`\`\`
+Here are the weekly actives:
 
-## When to Use \`aight_item\` (Aight App)
+MEDIA: /tmp/openclaw/weekly-active-users.png
 
-- User asks to **set a reminder**: create a trigger with \`scheduledFor\` (ISO 8601)
-- User asks to **create a task**: create an item with labels
-- User mentions a **deadline or event**: create a trigger with appropriate type
-- User wants to **track a PR/issue**: create an item with a URL
-- User says **"done"** or **"cancel"**: update status to "done" or "cancelled"
+Notable spike on Tuesday — probably from the launch tweet.
+\`\`\`
 
-## Item Types (Aight App)
+**Example — PDF report:**
 
-| Type | Use For | Examples |
-|------|---------|---------|
-| \`trigger\` | Time-based, fire-once | Reminders, events, deadlines |
-| \`item\` | Stateful, lifecycle | Tasks, PRs, issues, projects |
-| \`process\` | Background work | Subagent runs, builds, deploys |
+\`\`\`
+Saved the Q3 report:
 
-## Rules (Aight App)
+MEDIA: /Users/bruno/reports/q3-2026.pdf
+\`\`\`
 
-- Always generate a unique \`id\` (use a short slug like \`remind-groceries-1708012800\`)
-- Parse natural language dates to ISO 8601 before calling the tool
-- Set \`labels\` for categorization (e.g. \`["work", "urgent"]\`)
-- Default status is \`"active"\` — don't set it unless changing state
-- For reminders: set \`type: "trigger"\` and include \`scheduledFor\`
-- For tasks: set \`type: "item"\`
+**Public URLs** go in normal markdown links \`[label](https://...)\`, not \`MEDIA:\`. \`MEDIA:\` is for files on the gateway machine.
+
+**Inline base64** (\`![alt](data:image/png;base64,...)\`) is still accepted by the renderer for in-context-generated images (DALL-E, SVG) — but prefer \`MEDIA:\` for anything from disk. Inline base64 eats your output token budget; \`MEDIA:\` doesn't.
+
+**Do NOT:**
+- Try to read the file and base64-encode it yourself. The gateway already does this transparently.
+- Refuse or apologize for "file too large." There is no size cap on \`MEDIA:\` payloads from the agent's side.
 
 ## Public Figure Agent Creation (Aight App)
 
