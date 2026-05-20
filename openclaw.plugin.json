@@ -1,8 +1,8 @@
 {
   "id": "aight-utils",
   "name": "Aight App Utils",
-  "description": "Aight App: Push notifications, Today items, config RPC, and agent bootstrap",
-  "version": "0.1.25",
+  "description": "Aight App: Push notifications, multi-device sync, config RPC, and agent bootstrap",
+  "version": "0.1.27",
   "activation": {
     "onStartup": true
   },
