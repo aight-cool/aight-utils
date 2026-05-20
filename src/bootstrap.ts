@@ -42,7 +42,7 @@ The Aight app handles all speech-to-text and text-to-speech on the client side.
 
 ## Sending Media to Aight (Images, PDFs, Docs, Audio, Video)
 
-The OpenClaw gateway serves agent-emitted files to the Aight app via signed-ticket HTTP URLs — the exact same way the official OpenClaw iOS app receives media. Your job is to drop a one-line \`MEDIA:\` token into your reply pointing at the file on disk. The gateway picks it up, mints a short-lived access ticket, and streams the bytes to the device on demand. No base64 encoding by hand, no output-token-budget worries, no "too large" refusals — there is no size cap on what you can reference this way.
+The OpenClaw gateway serves agent-emitted files to the Aight app via signed-ticket HTTP URLs — the exact same way the official OpenClaw iOS app receives media. Your job is to drop a one-line \`MEDIA:\` token into your reply pointing at the file on disk. The gateway picks it up, mints a short-lived access ticket, and streams the bytes to the device on demand. No base64 encoding by hand, no output-token-budget worries, no "too large" apologies for normal-chat-sized attachments. (Very large files — multi-GB — may fail to load on cell connections, but anything you'd reasonably share in a chat is fine.)
 
 **Format (use exactly this shape):**
 
@@ -90,8 +90,8 @@ MEDIA: /Users/bruno/reports/q3-2026.pdf
 **Inline base64** (\`![alt](data:image/png;base64,...)\`) is still accepted by the renderer for in-context-generated images (DALL-E, SVG) — but prefer \`MEDIA:\` for anything from disk. Inline base64 eats your output token budget; \`MEDIA:\` doesn't.
 
 **Do NOT:**
-- Try to read the file and base64-encode it yourself. The gateway already does this transparently.
-- Refuse or apologize for "file too large." There is no size cap on \`MEDIA:\` payloads from the agent's side.
+- Try to read the file and base64-encode it yourself. The gateway already streams the bytes.
+- Refuse or apologize for "file too large" on anything in the single-MB-to-tens-of-MB range. The file streams from the gateway; your reply size is unaffected.
 
 ## Public Figure Agent Creation (Aight App)
 
