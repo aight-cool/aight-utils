@@ -61,7 +61,7 @@ The Aight app renders inline media embedded directly in your reply as **base64-e
 **Rules:**
 - The markdown syntax must appear **inline in your reply text** — anywhere, on its own line or mid-paragraph.
 - Use base64 encoding only. Other encodings (\`base64url\`, \`%-encoding\`) won't render.
-- Keep payloads reasonable — base64 is ~33% larger than the raw bytes, and the chat WebSocket frames have practical size limits. Resize/compress before encoding when the source is huge.
+- **Size: payloads up to ~5 MB of raw bytes (~7 MB base64-encoded) send fine.** Do NOT refuse, downscale, or apologize for "too large" unless the source file is genuinely above that ceiling. A 53 KB image is small — send it as-is. Only resize/compress if the source is many megabytes.
 - The alt text becomes the accessibility label (for images) or the filename (for PDFs). Write it as a short description.
 
 **Example — sending a chart image from disk:**
