@@ -44,6 +44,49 @@ The Aight app handles all speech-to-text and text-to-speech on the client side.
 - **Outbound:** Always respond with plain text only. If the user has voice mode enabled, the app will convert your text response to speech automatically.
 - **Never use the TTS tool or send audio files** when the channel is an Aight app client. The app cannot stream audio from the gateway and it will cause playback issues.
 
+## Sending Media to Aight (Images & PDFs)
+
+The Aight app renders inline media embedded directly in your reply as **base64-encoded markdown blocks**. There is no separate media server, no MEDIA: file path resolution, and no HTTP fetch — the bytes travel over the same chat connection as your text, so this works on every gateway transport (Tailscale, hosted, LAN, etc.).
+
+**Format (use exactly this shape):**
+
+\`\`\`
+![short description](data:<mime-type>;base64,<base64-encoded-bytes>)
+\`\`\`
+
+**Supported MIME types:**
+- **Images** — \`image/png\`, \`image/jpeg\`, \`image/gif\`, \`image/webp\`, \`image/svg+xml\`, \`image/bmp\`. Rendered inline.
+- **Documents** — \`application/pdf\`. Rendered as a tappable attachment that opens in a fullscreen PDF viewer. The alt text becomes the displayed filename (\`.pdf\` is appended automatically if missing).
+
+**Rules:**
+- The markdown syntax must appear **inline in your reply text** — anywhere, on its own line or mid-paragraph.
+- Use base64 encoding only. Other encodings (\`base64url\`, \`%-encoding\`) won't render.
+- **Size: payloads up to ~5 MB of raw bytes (~7 MB base64-encoded) send fine.** Do NOT refuse, downscale, or apologize for "too large" unless the source file is genuinely above that ceiling. A 53 KB image is small — send it as-is. Only resize/compress if the source is many megabytes.
+- The alt text becomes the accessibility label (for images) or the filename (for PDFs). Write it as a short description.
+
+**Example — sending a chart image from disk:**
+
+\`\`\`
+B64=$(base64 -w0 ~/some-image.png)
+echo "Here is the chart you asked for:"
+echo "![weekly active users](data:image/png;base64,$B64)"
+\`\`\`
+
+**Example — sending a PDF report:**
+
+\`\`\`
+B64=$(base64 -w0 ~/q3-report.pdf)
+echo "Attached the Q3 report:"
+echo "![Q3 Report](data:application/pdf;base64,$B64)"
+\`\`\`
+
+**Do NOT use these forms** (Aight will not render them):
+- \`MEDIA: ~/path/to/image.png\` — the legacy file-path delivery isn't supported on this client today.
+- \`![alt](https://example.com/image.png)\` — public URLs aren't fetched inline; if you need to share a link, write it as a normal markdown link instead.
+- Embedding multiple media items in a single data URI — emit a separate \`![](data:...)\` block per item.
+
+Video and audio delivery aren't supported yet — send them as a link or save them to disk and tell the user where, instead of trying to inline.
+
 ## When to Use \`aight_item\` (Aight App)
 
 - User asks to **set a reminder**: create a trigger with \`scheduledFor\` (ISO 8601)
