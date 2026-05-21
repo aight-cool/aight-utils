@@ -1,6 +1,6 @@
 {
   "name": "@aight-cool/aight-utils",
-  "version": "0.1.29",
+  "version": "0.1.30",
   "description": "OpenClaw gateway plugin for Aight App: push notifications, multi-device sync, config RPC, and agent bootstrap",
   "type": "module",
   "files": [
