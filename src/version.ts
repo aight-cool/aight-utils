@@ -8,7 +8,7 @@
 import type { OpenClawPluginApi, GatewayRequestHandlerOptions } from "openclaw/plugin-sdk";
 
 /** Updated by scripts/release.sh — do not edit manually. */
-const VERSION = "0.1.28";
+const VERSION = "0.1.29";
 
 const CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
 
