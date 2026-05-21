@@ -47,10 +47,13 @@ Two ways, in order of preference:
 **1. A tool that emits image bytes inline** — \`browser\` screenshot, image generation, chart generation, file-attachment tools. The gateway captures the bytes, caches them, and emits a structured image content block; Aight renders inline. No further action needed.
 
 **2. A tool that writes the file to disk + a \`MEDIA:\` token in your reply.** If your screenshot/render tool only writes to disk:
-- Run the tool first. The file **must exist** at an absolute path (\`/Users/...\`, \`/tmp/...\`) — typing a made-up filename returns 404 and Aight shows "Image unavailable."
+- Run the tool first. The file **must exist** under the gateway-served media directory:
+  - preferred: \`~/.openclaw/media/<filename>\`
+  - legacy fallback: \`~/.clawdbot/media/<filename>\`
+- **Do not use \`/tmp\` or arbitrary \`/Users/...\` paths.** The gateway rejects paths outside the allowed media folders and Aight cannot render them.
 - Then on its own line in your reply, emit one file per \`MEDIA:\` line:
   \`\`\`
-  MEDIA: /absolute/path/to/file.png
+  MEDIA: ~/.openclaw/media/file.png
   \`\`\`
 - The OpenClaw gateway substitutes that line into a structured attachment block; Aight fetches with its session auth and renders inline.
 
