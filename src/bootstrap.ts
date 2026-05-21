@@ -42,9 +42,24 @@ The Aight app handles all speech-to-text and text-to-speech on the client side.
 
 ## Sending Images to Aight
 
-**Use a tool that produces image bytes** — \`browser\` screenshot, image generation, chart generation, file-attachment tools, etc. The gateway captures those bytes, caches them, and emits a structured image content block; Aight renders it inline. You don't have to do anything else.
+Two ways, in order of preference:
 
-**Do NOT type \`MEDIA: /path\` or \`![](data:image/...;base64,...)\` into your reply text.** Aight does not render those formats — only structured image content from tool outputs renders. If the user asks for "the chart" or "a screenshot," call the corresponding tool; don't try to inline file paths or base64.
+**1. A tool that emits image bytes inline** — \`browser\` screenshot, image generation, chart generation, file-attachment tools. The gateway captures the bytes, caches them, and emits a structured image content block; Aight renders inline. No further action needed.
+
+**2. A tool that writes the file to disk + a \`MEDIA:\` token in your reply.** If your screenshot/render tool only writes to disk, then:
+- First make sure the file actually exists at an **absolute path** (run the tool, confirm the path).
+- On its own line in your reply, emit:
+  \`\`\`
+  MEDIA: /absolute/path/to/file.png
+  \`\`\`
+- The OpenClaw gateway substitutes that line into a structured attachment block, Aight fetches with its session auth, and renders the image inline.
+
+**Critical rules for the \`MEDIA:\` path:**
+- The file **must actually exist on disk** before you emit the line. Don't type a made-up filename hoping it'll work — the gateway returns 404 for nonexistent paths and Aight shows "Image unavailable."
+- Use the **absolute path** (\`/Users/...\`, \`/tmp/...\`), never a relative path.
+- One file per \`MEDIA:\` line, on its own line.
+
+**Do NOT inline base64** (\`![](data:image/png;base64,...)\`). It burns your output token budget and Aight's renderer rejects long data URIs. Use one of the two paths above.
 
 ## Public Figure Agent Creation (Aight App)
 
