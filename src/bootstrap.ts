@@ -2,7 +2,7 @@
  * Agent Bootstrap — injects AIGHT.md via before_prompt_build hook
  */
 
-import type { OpenClawPluginApi } from "openclaw/plugin-sdk";
+import type { OpenClawPluginApi } from "openclaw/plugin-sdk/plugin-entry";
 
 const AIGHT_MD = `# Aight Integration
 
@@ -242,12 +242,10 @@ See the Shortcuts Protocol at the top of this document.
 
 export function registerBootstrap(api: OpenClawPluginApi) {
   try {
-    // Register both event names so we work on old (before_agent_start only) and
-    // new (before_prompt_build) openclaw. Identical return shape lets the new
-    // SDK's `??` merge dedupe the injection.
-    const handler = () => ({ systemPrompt: AIGHT_MD });
-    api.on("before_prompt_build" as any, handler);
-    api.on("before_agent_start", handler);
+    // appendSystemContext (rather than a full systemPrompt replacement) lets
+    // providers cache this static guidance instead of paying its token cost
+    // on every turn.
+    api.on("before_prompt_build", () => ({ appendSystemContext: AIGHT_MD }));
   } catch (err) {
     api.logger.error(`[aight-utils] Failed to register bootstrap hook: ${err}`);
   }

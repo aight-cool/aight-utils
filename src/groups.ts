@@ -4,7 +4,7 @@
  * can show friendly titles instead of raw IDs.
  */
 
-import type { OpenClawPluginApi } from "openclaw/plugin-sdk";
+import type { OpenClawPluginApi } from "openclaw/plugin-sdk/plugin-entry";
 import { readFileSync, writeFileSync, mkdirSync } from "fs";
 import { join } from "path";
 import { homedir } from "os";

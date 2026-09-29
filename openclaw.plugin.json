@@ -3,6 +3,7 @@
   "name": "Aight App Utils",
   "description": "Aight App: Push notifications, multi-device sync, config RPC, and agent bootstrap",
   "version": "0.1.30",
+  "categories": ["productivity"],
   "activation": {
     "onStartup": true
   },

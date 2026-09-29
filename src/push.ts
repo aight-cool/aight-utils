@@ -8,7 +8,8 @@
  * sendKey. The relay recomputes the HMAC and verifies — zero state, no shared secrets.
  */
 
-import type { OpenClawPluginApi, GatewayRequestHandlerOptions } from "openclaw/plugin-sdk";
+import type { OpenClawPluginApi } from "openclaw/plugin-sdk/plugin-entry";
+import type { GatewayRequestHandlerOptions } from "openclaw/plugin-sdk/gateway-runtime";
 import type { AightConfig } from "./config.js";
 import { ensurePushHookEnabled } from "./config.js";
 import { DEFAULT_RELAY_URL } from "./defaults.js";

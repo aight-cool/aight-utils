@@ -2,7 +2,7 @@
  * Reminders Service — background service checking scheduled items every 30s
  */
 
-import type { OpenClawPluginApi } from "openclaw/plugin-sdk";
+import type { OpenClawPluginApi } from "openclaw/plugin-sdk/plugin-entry";
 import type { AightConfig } from "./config.js";
 import { loadItems, saveItems } from "./items.js";
 import { loadTokens } from "./push-store.js";

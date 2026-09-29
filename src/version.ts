@@ -5,7 +5,8 @@
  * Uses Node built-ins only (no child_process).
  */
 
-import type { OpenClawPluginApi, GatewayRequestHandlerOptions } from "openclaw/plugin-sdk";
+import type { OpenClawPluginApi } from "openclaw/plugin-sdk/plugin-entry";
+import type { GatewayRequestHandlerOptions } from "openclaw/plugin-sdk/gateway-runtime";
 
 /** Updated by scripts/release.sh — do not edit manually. */
 const VERSION = "0.1.30";

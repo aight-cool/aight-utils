@@ -2,7 +2,7 @@
  * Push notification hook — sends push on agent_end.
  */
 
-import type { OpenClawPluginApi } from "openclaw/plugin-sdk";
+import type { OpenClawPluginApi } from "openclaw/plugin-sdk/plugin-entry";
 import { getPluginConfig } from "./config.js";
 import { loadTokens, unregisterToken } from "./push-store.js";
 import { sendPush } from "./push-net.js";

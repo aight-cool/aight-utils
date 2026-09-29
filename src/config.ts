@@ -2,7 +2,8 @@
  * Config RPC module — aight.config.get, aight.config.patch, aight.status
  */
 
-import type { OpenClawPluginApi, GatewayRequestHandlerOptions } from "openclaw/plugin-sdk";
+import type { OpenClawPluginApi } from "openclaw/plugin-sdk/plugin-entry";
+import type { GatewayRequestHandlerOptions } from "openclaw/plugin-sdk/gateway-runtime";
 import { DEFAULT_PUSH_MODE } from "./defaults.js";
 
 export interface AightConfig {
@@ -54,7 +55,7 @@ let pushHookEnabledCache: boolean | null = null;
 export async function isPushHookEnabled(api: OpenClawPluginApi): Promise<boolean> {
   if (pushHookEnabledCache === true) return true;
   try {
-    const currentConfig = (await api.runtime.config.loadConfig()) as any;
+    const currentConfig = api.runtime.config.current() as any;
     const enabled =
       currentConfig?.plugins?.entries?.["aight-utils"]?.hooks?.allowConversationAccess === true;
     if (enabled) pushHookEnabledCache = true;
@@ -71,24 +72,23 @@ export async function isPushHookEnabled(api: OpenClawPluginApi): Promise<boolean
 export async function ensurePushHookEnabled(api: OpenClawPluginApi): Promise<boolean> {
   if (pushHookEnabledCache === true) return true;
   try {
-    const currentConfig = (await api.runtime.config.loadConfig()) as any;
-    const pluginEntry = currentConfig?.plugins?.entries?.["aight-utils"] ?? {};
-    if (pluginEntry.hooks?.allowConversationAccess === true) {
+    const currentConfig = api.runtime.config.current() as any;
+    if (currentConfig?.plugins?.entries?.["aight-utils"]?.hooks?.allowConversationAccess === true) {
       pushHookEnabledCache = true;
       return true;
     }
 
-    await api.runtime.config.writeConfigFile({
-      ...currentConfig,
-      plugins: {
-        ...currentConfig.plugins,
-        entries: {
-          ...currentConfig.plugins?.entries,
-          "aight-utils": {
-            ...pluginEntry,
-            hooks: { ...pluginEntry.hooks, allowConversationAccess: true },
-          },
-        },
+    // This write is best-effort catch-up for existing installs and doesn't
+    // need to take effect this boot — the hooks just stay soft-blocked until
+    // the next natural reload. It must never force a restart, especially
+    // since this runs during the gateway's own startup (see registerPush()).
+    await api.runtime.config.mutateConfigFile({
+      afterWrite: { mode: "none", reason: "aight-utils: hooks.allowConversationAccess catch-up" },
+      mutate(draft: any) {
+        draft.plugins ??= {};
+        draft.plugins.entries ??= {};
+        const pluginEntry = (draft.plugins.entries["aight-utils"] ??= {});
+        pluginEntry.hooks = { ...pluginEntry.hooks, allowConversationAccess: true };
       },
     });
     pushHookEnabledCache = true;
@@ -123,44 +123,38 @@ export function registerConfig(api: OpenClawPluginApi) {
           }
         }
 
-        // Load current config
-        const currentConfig = await api.runtime.config.loadConfig();
-        const pluginEntry = (currentConfig as any)?.plugins?.entries?.["aight-utils"] ?? {};
-        const currentPluginConfig = pluginEntry.config ?? {};
+        // Merge allowed plugin-level keys into plugin config via a transactional
+        // mutation — only the plugin's own config section is touched; root
+        // gateway config is preserved as-is and never overwritten by client input.
+        const { result: merged } = await api.runtime.config.mutateConfigFile<
+          Record<string, unknown>
+        >({
+          afterWrite: { mode: "auto" },
+          mutate(draft: any) {
+            draft.plugins ??= {};
+            draft.plugins.entries ??= {};
+            const pluginEntry = (draft.plugins.entries["aight-utils"] ??= {});
+            const currentPluginConfig = pluginEntry.config ?? {};
 
-        // Deep merge allowed plugin-level keys into plugin config
-        const merged = { ...currentPluginConfig };
-        for (const [key, value] of Object.entries(incoming)) {
-          if (
-            value &&
-            typeof value === "object" &&
-            !Array.isArray(value) &&
-            merged[key] &&
-            typeof merged[key] === "object"
-          ) {
-            merged[key] = { ...merged[key], ...value };
-          } else {
-            merged[key] = value;
-          }
-        }
+            const merged = { ...currentPluginConfig };
+            for (const [key, value] of Object.entries(incoming)) {
+              if (
+                value &&
+                typeof value === "object" &&
+                !Array.isArray(value) &&
+                merged[key] &&
+                typeof merged[key] === "object"
+              ) {
+                merged[key] = { ...merged[key], ...value };
+              } else {
+                merged[key] = value;
+              }
+            }
 
-        // Build updated config — only the plugin's own config section is modified;
-        // root gateway config is preserved as-is and never overwritten by client input.
-        const updatedConfig: Record<string, unknown> = {
-          ...(currentConfig as Record<string, unknown>),
-          plugins: {
-            ...((currentConfig as any)?.plugins ?? {}),
-            entries: {
-              ...((currentConfig as any)?.plugins?.entries ?? {}),
-              "aight-utils": {
-                ...pluginEntry,
-                config: merged,
-              },
-            },
+            pluginEntry.config = merged;
+            return merged;
           },
-        };
-
-        await api.runtime.config.writeConfigFile(updatedConfig as any);
+        });
         respond(true, { ok: true, config: getClientSafeConfig(merged as AightConfig) });
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);

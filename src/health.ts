@@ -7,7 +7,8 @@
 
 import * as os from "node:os";
 import * as fs from "node:fs";
-import type { OpenClawPluginApi, GatewayRequestHandlerOptions } from "openclaw/plugin-sdk";
+import type { OpenClawPluginApi } from "openclaw/plugin-sdk/plugin-entry";
+import type { GatewayRequestHandlerOptions } from "openclaw/plugin-sdk/gateway-runtime";
 
 interface HealthStats {
   memory: { usedGB: number; totalGB: number; percent: number } | null;

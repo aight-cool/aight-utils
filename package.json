@@ -36,15 +36,15 @@
     "@sinclair/typebox": "^0.34.0"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=24.16.0 <25 || >=26.1.0"
   },
   "peerDependencies": {
-    "openclaw": ">=2026.1.0"
+    "openclaw": ">=2026.9.6"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.2",
     "eslint": "^9.39.2",
-    "openclaw": "*",
+    "openclaw": ">=2026.9.6",
     "prettier": "^3.8.1",
     "tsup": "^8.5.1",
     "typescript": "^5.7.0",
@@ -54,6 +54,14 @@
   "openclaw": {
     "extensions": [
       "./dist/index.js"
-    ]
+    ],
+    "compat": {
+      "pluginApi": ">=2026.9.6",
+      "minGatewayVersion": "2026.9.6"
+    },
+    "build": {
+      "openclawVersion": "2026.9.6",
+      "pluginSdkVersion": "2026.9.6"
+    }
   }
 }

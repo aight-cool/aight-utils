@@ -4,7 +4,8 @@
  * Push notifications, Today items, config RPC, and agent bootstrap for the Aight app.
  */
 
-import type { OpenClawPluginApi } from "openclaw/plugin-sdk";
+import type { OpenClawPluginApi } from "openclaw/plugin-sdk/plugin-entry";
+import { definePluginEntry } from "openclaw/plugin-sdk/plugin-entry";
 import { registerConfig, getPluginConfig } from "./src/config.js";
 import { registerItems } from "./src/items.js";
 import { registerPush } from "./src/push.js";
@@ -16,11 +17,13 @@ import { registerVersion } from "./src/version.js";
 import { registerGroupRpc } from "./src/groups.js";
 import { registerNotifPrefsRPC } from "./src/notif-prefs.js";
 
-const aightPlugin = {
+export default definePluginEntry({
   id: "aight-utils",
   name: "Aight Utilities",
   description: "Push notifications, Today items, config RPC, and agent bootstrap for the Aight app",
 
+  // UI labels/placeholders live in openclaw.plugin.json's top-level `uiHints`;
+  // the host no longer reads uiHints from the runtime configSchema.
   configSchema: {
     parse(value: unknown) {
       const raw =
@@ -38,23 +41,6 @@ const aightPlugin = {
         },
       };
     },
-    uiHints: {
-      "push.mode": {
-        label: "Notification Mode",
-        help: "Private = silent wake. Rich = preview text in notification.",
-      },
-      "push.relayUrl": {
-        label: "Push Relay URL",
-        placeholder: "https://push.aight.app",
-      },
-      "push.relaySecret": {
-        label: "Relay Shared Secret",
-        sensitive: true,
-      },
-      "today.enabled": {
-        label: "Today View",
-      },
-    },
   },
 
   register(api: OpenClawPluginApi) {
@@ -71,6 +57,4 @@ const aightPlugin = {
     registerGroupRpc(api);
     registerNotifPrefsRPC(api);
   },
-};
-
-export default aightPlugin;
+});
